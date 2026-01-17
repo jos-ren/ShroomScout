@@ -9,26 +9,119 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var userProfiles: [UserProfile]
+    @Query private var allSpecies: [Species]
+    @Query private var allSightings: [Sighting]
+
     @State private var selectedTab: Tab = .home
     @State private var showScanner: Bool = false
+    @State private var navigationPath = NavigationPath()
+    @State private var pendingMapLocation: (latitude: Double, longitude: Double)?
+
+    /// Returns true if user has completed onboarding
+    private var hasCompletedOnboarding: Bool {
+        userProfiles.first?.hasCompletedOnboarding ?? false
+    }
 
     var body: some View {
-        TabBarContainer(selectedTab: $selectedTab, onScanTapped: {
-            showScanner = true
-        }) {
-            Group {
-                switch selectedTab {
-                case .home:
-                    HomeView()
-                case .collection:
-                    CollectionView()
-                case .scan:
-                    // Scan is handled via modal, show home as fallback
-                    HomeView()
-                case .map:
-                    MapView()
-                case .profile:
-                    ProfileView()
+        Group {
+            if hasCompletedOnboarding {
+                mainAppView
+            } else {
+                OnboardingView()
+            }
+        }
+    }
+
+    // MARK: - Main App View
+
+    private var mainAppView: some View {
+        NavigationStack(path: $navigationPath) {
+            TabBarContainer(selectedTab: $selectedTab, onScanTapped: {
+                showScanner = true
+            }) {
+                Group {
+                    switch selectedTab {
+                    case .home:
+                        HomeView(onSpeciesTapped: navigateToSpecies)
+                    case .collection:
+                        CollectionView(onSpeciesTapped: navigateToSpecies)
+                    case .scan:
+                        // Scan is handled via modal, show home as fallback
+                        HomeView(onSpeciesTapped: navigateToSpecies)
+                    case .map:
+                        MapView(
+                            onSpeciesTapped: navigateToSpecies,
+                            targetLocation: pendingMapLocation
+                        )
+                        .onAppear {
+                            // Clear pending location after map appears
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                pendingMapLocation = nil
+                            }
+                        }
+                    case .profile:
+                        ProfileView()
+                    }
+                }
+            }
+            .navigationDestination(for: String.self) { speciesID in
+                // Try SwiftData first, fall back to sample data
+                if let species = allSpecies.first(where: { $0.id == speciesID }) {
+                    let sightings = allSightings.filter { $0.speciesID == speciesID }
+                    SpeciesDetailView(
+                        species: species,
+                        userSightings: sightings,
+                        onNavigateToLocation: navigateToLocation
+                    )
+                } else if let sampleSpecies = SampleData.mixedDiscoveryStates.first(where: { $0.id == speciesID }) {
+                    // Check if discovered or not
+                    if sampleSpecies.isDiscovered {
+                        // Convert sample species to Species for display
+                        let species = Species(
+                            id: sampleSpecies.id,
+                            commonName: sampleSpecies.commonName,
+                            scientificName: sampleSpecies.scientificName,
+                            speciesDescription: sampleSpecies.description,
+                            rarity: sampleSpecies.rarity,
+                            edibility: sampleSpecies.edibility,
+                            season: sampleSpecies.season,
+                            habitat: sampleSpecies.habitat,
+                            identificationTips: sampleSpecies.keyFeatures.joined(separator: ". "),
+                            lookalikes: [],
+                            region: "pnw",
+                            referenceImageName: sampleSpecies.imageName
+                        )
+                        // Create sample sightings for demo
+                        let sampleSightings: [Sighting] = [
+                            Sighting(
+                                speciesID: sampleSpecies.id,
+                                photoFileName: sampleSpecies.imageName,
+                                latitude: 47.6062,
+                                longitude: -122.3321
+                            ),
+                            Sighting(
+                                speciesID: sampleSpecies.id,
+                                photoFileName: sampleSpecies.imageName,
+                                latitude: 47.6615,
+                                longitude: -122.4176
+                            )
+                        ]
+                        SpeciesDetailView(
+                            species: species,
+                            userSightings: sampleSightings,
+                            onNavigateToLocation: navigateToLocation
+                        )
+                    } else {
+                        // Show undiscovered view
+                        UndiscoveredSpeciesDetailView(
+                            species: sampleSpecies,
+                            onStartScanning: {
+                                showScanner = true
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -36,58 +129,35 @@ struct ContentView: View {
             ScannerView(isPresented: $showScanner)
         }
     }
-}
 
-// MARK: - Scanner View (Placeholder)
+    // MARK: - Navigation Helpers
 
-struct ScannerView: View {
-    @Binding var isPresented: Bool
+    private func navigateToSpecies(_ speciesID: String) {
+        navigationPath.append(speciesID)
+    }
 
-    var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            MascotView(expression: .curious, size: 120)
-
-            Text("Scan a Mushroom")
-                .font(.nunito(24, weight: .bold))
-                .foregroundColor(AppColors.textDark)
-
-            Text("Point your camera at a mushroom to identify it.")
-                .font(.nunito(14, weight: .regular))
-                .foregroundColor(AppColors.textLight)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            // Camera placeholder
-            RoundedRectangle(cornerRadius: 20)
-                .fill(AppColors.cream)
-                .frame(height: 300)
-                .overlay(
-                    VStack(spacing: 12) {
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 48))
-                            .foregroundColor(AppColors.primaryGreen.opacity(0.3))
-
-                        Text("Camera Preview")
-                            .font(.nunito(14, weight: .semibold))
-                            .foregroundColor(AppColors.textLight)
-                    }
-                )
-                .padding(.horizontal, 24)
-
-            Spacer()
-
-            AppButton("Close", style: .secondary) {
-                isPresented = false
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 32)
-        }
-        .background(AppColors.background)
+    private func navigateToLocation(_ latitude: Double, _ longitude: Double) {
+        // Set pending location and switch to map tab
+        pendingMapLocation = (latitude: latitude, longitude: longitude)
+        navigationPath.removeLast(navigationPath.count) // Pop all views
+        selectedTab = .map
     }
 }
 
-#Preview {
+#Preview("Main App") {
     ContentView()
+        .modelContainer(for: [UserProfile.self, Species.self, Sighting.self], inMemory: true) { result in
+            if case .success(let container) = result {
+                // Create a user who has completed onboarding
+                let profile = UserProfile()
+                profile.hasCompletedOnboarding = true
+                profile.hasAgreedToDisclaimer = true
+                container.mainContext.insert(profile)
+            }
+        }
+}
+
+#Preview("Onboarding") {
+    ContentView()
+        .modelContainer(for: [UserProfile.self, Species.self, Sighting.self], inMemory: true)
 }

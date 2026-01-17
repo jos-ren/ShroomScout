@@ -8,6 +8,9 @@
 import SwiftUI
 
 struct CollectionView: View {
+    /// Callback when a species is tapped to navigate to detail
+    var onSpeciesTapped: ((String) -> Void)?
+
     @State private var viewMode: CollectionViewMode = .allSpecies
     @State private var selectedRarities: Set<Rarity> = []
 
@@ -46,7 +49,9 @@ struct CollectionView: View {
                 // Collection grid
                 CollectionGrid {
                     ForEach(filteredSpecies) { species in
-                        CollectionCard(species: species)
+                        CollectionCard(species: species) {
+                            onSpeciesTapped?(species.id)
+                        }
                     }
                 }
             }

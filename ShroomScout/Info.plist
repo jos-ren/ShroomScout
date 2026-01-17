@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>NSCameraUsageDescription</key>
+    <string>ShroomScout needs camera access to scan and identify mushrooms. Your photos are processed on-device and stay private.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>ShroomScout needs your location to show nearby mushroom discoveries and help you track where you find mushrooms.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>ShroomScout needs your location to show nearby mushroom discoveries, track where you find mushrooms, and notify you of nearby sightings.</string>
     <key>UIBackgroundModes</key>
     <array>
         <string>remote-notification</string>

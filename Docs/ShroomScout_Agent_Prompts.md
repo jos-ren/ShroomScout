@@ -149,7 +149,7 @@ Output all files with their complete file paths.
 ```
 Build the Home Screen for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma link: https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=13-8914&t=4qJxElTx6txmDqWz-4
 
 IMPORTANT: Use existing components from Views/Components/ — do NOT recreate them.
 Available components: PrimaryButton, SecondaryButton, AppCard, RarityBadge, MascotView, ProgressBar, SectionHeader, EmptyStateView, CustomTabBar
@@ -183,40 +183,7 @@ Requirements:
 ## Agent 3: Collection Screen
 
 ```
-Build the Collection Screen for ShroomScout based on the Figma design.
-
-Figma link: [INSERT FIGMA LINK]
-
-Requirements:
-1. Create CollectionView.swift and CollectionViewModel.swift
-
-2. Layout:
-   - Header: "My Collection" title (left), "47/156" progress (right), toggle button
-   - Filter pills horizontal scroll: All, Common, Uncommon, Rare, Legendary
-   - 3-column grid of species cards
-   - View toggle between "All Species" and "My Finds"
-
-3. Create SpeciesCardView.swift with two states:
-   - Found: User's photo, checkmark badge, species name, rarity dot
-   - Unfound: Gray mushroom silhouette (SF Symbol leaf.fill in gray), "???" text
-
-4. Grid behavior:
-   - Fixed positions (species always in same slot like a sticker book)
-   - LazyVGrid with 3 flexible columns
-   - Cards are square with rounded corners
-
-5. Filter logic:
-   - "All" shows everything
-   - Rarity filters show only that rarity
-   - "My Finds" toggle hides unfound placeholders
-
-6. Empty state:
-   - Full grid of gray silhouettes
-   - Mascot overlay with encouraging message
-   - "Start Scanning" button
-
-7. Tap behavior:
-   - Navigate to SpeciesDetailView (can be placeholder for now)
+This page is already completed no need to do any further work.
 ```
 
 ---
@@ -226,7 +193,10 @@ Requirements:
 ```
 Build the Camera Scanner Screen for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma links: 
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-1918&t=4qJxElTx6txmDqWz-4
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-2091&t=4qJxElTx6txmDqWz-4
+
 
 Requirements:
 1. Create ScannerView.swift and ScannerViewModel.swift
@@ -264,7 +234,8 @@ Requirements:
 ```
 Build the Scan Results Screen for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma link: 
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-1988&t=4qJxElTx6txmDqWz-4
 
 Requirements:
 1. Create ScanResultsView.swift
@@ -305,7 +276,7 @@ Requirements:
 ```
 Build the Collection Confirmation Screen for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma link: https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-2180&t=4qJxElTx6txmDqWz-4
 
 Requirements:
 1. Create ConfirmationView.swift
@@ -341,7 +312,7 @@ Requirements:
 ```
 Build the Species Detail Screen for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma link: https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-2263&t=4qJxElTx6txmDqWz-4
 
 Requirements:
 1. Create SpeciesDetailView.swift
@@ -381,10 +352,17 @@ Requirements:
 ```
 Build the Onboarding Flow for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma link: 
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-2715&t=4qJxElTx6txmDqWz-4
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-2&t=4qJxElTx6txmDqWz-4
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-41&t=4qJxElTx6txmDqWz-4
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-108&t=4qJxElTx6txmDqWz-4
+https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-162&t=4qJxElTx6txmDqWz-4
 
 IMPORTANT: Use existing components from Views/Components/
 Available: PrimaryButton, SecondaryButton, AppCard, MascotView, WarningBanner, EmptyStateView
+
+You will need to create a few new components.
 
 Requirements:
 1. Create OnboardingView.swift with TabView for paging
@@ -426,7 +404,7 @@ Requirements:
 ```
 Build the Profile Screen for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma link: https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-2505&t=4qJxElTx6txmDqWz-4
 
 Requirements:
 1. Create ProfileView.swift and ProfileViewModel.swift
@@ -466,7 +444,7 @@ Requirements:
 ```
 Build the Map Screen for ShroomScout based on the Figma design.
 
-Figma link: [INSERT FIGMA LINK]
+Figma link: https://www.figma.com/design/axE63WLi48hMjk360vA18V/ShroomScout?node-id=1-2386&t=4qJxElTx6txmDqWz-4
 
 Requirements:
 1. Create MapView.swift and MapViewModel.swift

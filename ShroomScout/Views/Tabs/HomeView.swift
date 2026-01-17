@@ -2,42 +2,133 @@
 //  HomeView.swift
 //  ShroomScout
 //
-//  Home tab placeholder view.
+//  Main home screen with greeting, mascot card, collection stats, and recent discoveries.
 //
 
 import SwiftUI
 
 struct HomeView: View {
+    /// Callback when a species is tapped to navigate to detail
+    var onSpeciesTapped: ((String) -> Void)?
+
+    @State private var viewModel = HomeViewModel()
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                PageHeader(title: "Home")
+                // Header with greeting and region badge
+                HomeHeader(
+                    greeting: viewModel.greetingMessage,
+                    regionName: viewModel.regionName,
+                    regionIcon: viewModel.regionIcon
+                )
 
-                // Placeholder content
-                VStack(spacing: 16) {
-                    MascotView(expression: .happy, size: 120)
+                // Mascot card with speech bubble
+                MascotCard(
+                    message: viewModel.mascotMessage,
+                    expression: .happy
+                )
 
-                    Text("Welcome to ShroomScout!")
-                        .font(.nunito(18, weight: .bold))
-                        .foregroundColor(AppColors.textDark)
-
-                    Text("Start exploring and collecting mushrooms in your area.")
-                        .font(.nunito(14, weight: .regular))
-                        .foregroundColor(AppColors.textLight)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 32)
+                // Collection stats card
+                StatsCard(
+                    discoveredCount: viewModel.discoveredCount,
+                    totalCount: viewModel.totalSpeciesCount,
+                    rarityBreakdown: viewModel.rarityBreakdown
+                ) {
+                    // TODO: Navigate to collection tab
                 }
-                .padding(.top, 40)
+
+                // Recent discoveries section
+                if !viewModel.recentDiscoveries.isEmpty {
+                    RecentFindsRow(
+                        title: "Recent Discoveries",
+                        discoveries: viewModel.recentDiscoveries
+                    ) { discovery in
+                        onSpeciesTapped?(discovery.id)
+                    }
+                    .padding(.horizontal, -24) // Extend to edges for scroll
+                }
 
                 Spacer(minLength: 100)
             }
             .padding(.horizontal, 24)
-            .padding(.top, 16)
+            .padding(.top, 32)
         }
         .background(AppColors.background)
+        .onAppear {
+            viewModel.updateMascotMessage()
+        }
     }
 }
 
-#Preview {
+// MARK: - Home Header
+
+private struct HomeHeader: View {
+    let greeting: String
+    let regionName: String
+    let regionIcon: String
+
+    var body: some View {
+        HStack {
+            // Greeting text
+            Text(greeting)
+                .font(.nunito(24, weight: .bold))
+                .foregroundColor(AppColors.textDark)
+
+            Spacer()
+
+            // Region badge pill
+            RegionBadge(name: regionName, icon: regionIcon)
+        }
+    }
+}
+
+// MARK: - Region Badge
+
+private struct RegionBadge: View {
+    let name: String
+    let icon: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(icon)
+                .font(.nunito(18, weight: .regular))
+
+            Text(name)
+                .font(.nunito(14, weight: .semibold))
+                .foregroundColor(AppColors.primaryGreen)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(AppColors.primaryGreen.opacity(0.1))
+        .cornerRadius(100)
+    }
+}
+
+// MARK: - Preview
+
+#Preview("Home Screen") {
     HomeView()
+}
+
+#Preview("Home Header") {
+    VStack {
+        HomeHeader(
+            greeting: "Hey, Scout!",
+            regionName: "Pacific Northwest",
+            regionIcon: "🌲"
+        )
+        .padding(24)
+    }
+    .background(AppColors.background)
+}
+
+#Preview("Region Badge") {
+    HStack(spacing: 16) {
+        RegionBadge(name: "Pacific Northwest", icon: "🌲")
+        RegionBadge(name: "California", icon: "☀️")
+        RegionBadge(name: "Northeast", icon: "🍂")
+    }
+    .padding(24)
+    .background(AppColors.background)
 }
