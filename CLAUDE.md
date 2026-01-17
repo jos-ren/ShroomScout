@@ -14,6 +14,25 @@ Pokemon Go-style mushroom collection app for iOS 26 using SwiftUI and SwiftData.
 4. **Mascot:** Use 🍄 emoji via MascotView until real art exists
 5. **Architecture:** MVVM with SwiftData
 6. **Target:** iOS 26+
+7. **APP CODE > FIGMA:** Always prefer existing app component implementations over Figma designs (see below)
+
+## APP CODE TAKES PRIORITY OVER FIGMA DESIGNS
+
+**THIS IS CRITICAL - DO NOT IGNORE**
+
+When building or modifying components:
+- **ALWAYS** check if a component already exists in `Views/Components/`
+- **NEVER** change an existing component's appearance to match Figma
+- The app's implemented components have been refined and improved beyond the original Figma designs
+- Figma is for reference on NEW components only, not for "fixing" existing ones
+- If Figma shows something different than the app code, **the app code is correct**
+
+Existing components to NEVER restyle based on Figma:
+- CustomTabBar, CollectionCard, CollectionTabs, RarityFilters
+- AppButton, AppCard, AppBadge, PageHeader
+- MascotView, WarningBanner, ProgressIndicator, CollectionProgress
+
+When in doubt: Read the existing component code first, use it as-is.
 
 ## Code Style
 - SwiftUI only (no UIKit)

@@ -22,6 +22,12 @@ Tech requirements:
 - SwiftData for data persistence
 - MVVM architecture
 
+Tab Bar Structure:
+- Custom 5-tab layout with RAISED CENTER SCAN BUTTON
+- Tabs: Home, Collection, [SCAN], Map, Profile
+- Center scan button is larger, coral colored, floating above tab bar
+- Scan button opens ScannerView as full-screen modal (not a regular tab)
+
 CRITICAL — Reusable Components:
 - ALL reusable UI elements go in Views/Components/ folder
 - NEVER duplicate UI code — extract to a component instead
@@ -75,10 +81,12 @@ Tasks:
    - Include Species, Sighting, and UserProfile models in the schema
    - Enable CloudKit sync with .automatic configuration
 
-2. Create ContentView.swift with TabView navigation
-   - 4 tabs: Home, Collection, Map, Profile
-   - Use SF Symbols: house.fill, square.grid.2x2.fill, map.fill, person.fill
-   - Apply iOS 26 default tab bar styling (Liquid Glass)
+2. Create ContentView.swift with CUSTOM 5-TAB navigation:
+   - 5 tabs: Home, Collection, Scan (CENTER), Map, Profile
+   - Use SF Symbols: house.fill, square.grid.2x2.fill, camera.fill, map.fill, person.fill
+   - The CENTER SCAN TAB is a raised action button (larger, coral colored, floating above tab bar)
+   - Scan button opens ScannerView as a full-screen modal (.fullScreenCover), NOT a normal tab
+   - Create a custom tab bar component OR overlay a floating button on standard TabView
    
 3. Create the color extension (Color+App.swift) with all app colors
 
@@ -106,6 +114,7 @@ Tasks:
 
    Navigation/
    - AppNavBar.swift — Custom nav bar with back button, centered title, optional right action
+   - CustomTabBar.swift — Custom tab bar with 5 tabs, raised center scan button (coral, larger)
 
    Badges/
    - RarityBadge.swift — Colored dot + rarity text
@@ -143,7 +152,7 @@ Build the Home Screen for ShroomScout based on the Figma design.
 Figma link: [INSERT FIGMA LINK]
 
 IMPORTANT: Use existing components from Views/Components/ — do NOT recreate them.
-Available components: PrimaryButton, SecondaryButton, AppCard, RarityBadge, MascotView, ProgressBar, SectionHeader, EmptyStateView
+Available components: PrimaryButton, SecondaryButton, AppCard, RarityBadge, MascotView, ProgressBar, SectionHeader, EmptyStateView, CustomTabBar
 
 Requirements:
 1. Create HomeView.swift and HomeViewModel.swift
@@ -152,29 +161,21 @@ Requirements:
    - Header: "Hey, Scout!" greeting (left), region badge pill (right)
    - Mascot card using MascotView (expression: .happy) with speech bubble
    - Stats card using AppCard containing ProgressBar
-   - Large SCAN button — create ScanButton.swift in Components/Common/ (reusable)
    - "Recent Discoveries" using SectionHeader + horizontal scroll
-   - Bottom tab bar (already in ContentView)
+   - NOTE: Scan button is in the custom tab bar (center), NOT on the home screen
 
-3. New components to create (in Components/):
-   - Common/ScanButton.swift — Large coral button with camera icon, pulse animation
-   - (Put in Components so it can be reused elsewhere)
-
-4. HomeView-specific views (in Views/Home/):
+3. HomeView-specific views (in Views/Home/):
    - MascotCard.swift — AppCard containing MascotView + speech bubble text
    - StatsCard.swift — AppCard with "Your Collection" title + ProgressBar
    - RecentFindsRow.swift — Horizontal scroll of circular thumbnails
 
-5. Match Figma exactly for:
+4. Match Figma exactly for:
    - Spacing and padding
    - Font sizes and weights
    - Corner radii
    - Shadow values
 
-6. Use sample data for previews
-
-7. ScanButton should have subtle pulse animation using:
-   .scaleEffect() with repeating animation
+5. Use sample data for previews
 ```
 
 ---

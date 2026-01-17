@@ -397,9 +397,49 @@ Text("47 species found")
 
 - **Liquid Glass materials** — For tab bar, navigation bar, cards
 - **New tab bar behavior** — Shrinking tab bar on scroll
-- **SF Rounded** — System rounded font for playful aesthetic
 - **Improved SwiftUI performance** — Optimized List rendering
 - **New animation APIs** — Bouncy spring animations
+
+---
+
+## Tab Bar Structure
+
+The app uses a **custom 5-tab layout** with a raised center action button:
+
+```
+┌─────────────────────────────────────────────┐
+│                                             │
+│              [Current Screen]               │
+│                                             │
+├─────────────────────────────────────────────┤
+│                    ┌───┐                    │
+│                    │ 📷│  ← Raised scan     │
+│                    └───┘    button          │
+│  🏠      📚                 🗺️      👤     │
+│ Home  Collection   Scan    Map   Profile    │
+└─────────────────────────────────────────────┘
+```
+
+**Tab Configuration:**
+| Position | Tab | Icon | Behavior |
+|----------|-----|------|----------|
+| 1 | Home | house.fill | Normal tab |
+| 2 | Collection | square.grid.2x2.fill | Normal tab |
+| 3 | Scan | camera.fill | **Raised button** — opens Scanner modally |
+| 4 | Map | map.fill | Normal tab |
+| 5 | Profile | person.fill | Normal tab |
+
+**Center Scan Button:**
+- Larger than other tab items
+- Raised/floating above the tab bar
+- Coral color (#FF8A6C) to stand out
+- Opens ScannerView as a **full-screen modal** (not a tab)
+- Should have subtle pulse or glow animation
+
+**Implementation Approach:**
+- Use a custom `CustomTabBar` component (not default TabView)
+- Or overlay a floating button on top of standard TabView
+- The scan button triggers `.fullScreenCover` to present ScannerView
 
 ---
 
@@ -575,6 +615,7 @@ struct ShroomScoutApp: App {
 | `PrimaryButton.swift` | Coral pill button used everywhere |
 | `SecondaryButton.swift` | Outlined button style |
 | `AppNavBar.swift` | Custom navigation bar with back button, title, optional right action |
+| `CustomTabBar.swift` | Custom tab bar with 5 tabs and raised center scan button |
 | `AppCard.swift` | Standard card container with shadow and rounded corners |
 | `RarityBadge.swift` | Colored dot + rarity label |
 | `EdibilityBadge.swift` | Icon + edibility status |
