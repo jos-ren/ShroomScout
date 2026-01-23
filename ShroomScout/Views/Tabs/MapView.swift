@@ -23,7 +23,6 @@ struct MapView: View {
     @StateObject private var viewModel = MapViewModel()
     @State private var showLocationDeniedAlert = false
     @State private var showCallout = false
-    @State private var showSightingDetail = false
     @State private var selectedSightingForDetail: MapSightingItem?
 
     var body: some View {
@@ -36,29 +35,9 @@ struct MapView: View {
                 // Search bar at top
                 searchFilterBar
                     .padding(.horizontal, 24)
-                    .padding(.top, 24)
+                    .padding(.top, 16)
 
                 Spacer()
-
-                // Callout for selected sighting (above bottom sheet)
-                if showCallout, let sighting = viewModel.selectedSighting {
-                    SightingCalloutView(
-                        sighting: sighting,
-                        onViewDetails: {
-                            selectedSightingForDetail = sighting
-                            showSightingDetail = true
-                        },
-                        onDismiss: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                                viewModel.selectedSighting = nil
-                                showCallout = false
-                            }
-                        }
-                    )
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
 
                 // Bottom sheet
                 bottomSheet
@@ -77,6 +56,29 @@ struct MapView: View {
                     .padding(.trailing, 24)
                     .padding(.bottom, viewModel.bottomSheetState.detentHeight + 16)
                 }
+            }
+
+            // Callout for selected sighting (above everything)
+            if showCallout, let sighting = viewModel.selectedSighting {
+                VStack {
+                    Spacer()
+
+                    SightingCalloutView(
+                        sighting: sighting,
+                        onViewDetails: {
+                            selectedSightingForDetail = sighting
+                        },
+                        onDismiss: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                                viewModel.selectedSighting = nil
+                                showCallout = false
+                            }
+                        }
+                    )
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, viewModel.bottomSheetState.detentHeight + 16)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
             // Location permission denied overlay
@@ -120,64 +122,47 @@ struct MapView: View {
         } message: {
             Text("Please enable location access in Settings to see nearby discoveries and your location on the map.")
         }
-        .sheet(isPresented: $showSightingDetail) {
-            if let mapSighting = selectedSightingForDetail {
-                // Convert MapSightingItem to Sighting for the detail sheet
-                let sighting = Sighting(
-                    speciesID: mapSighting.speciesID,
-                    photoFileName: mapSighting.photoFileName,
-                    latitude: mapSighting.coordinate.latitude,
-                    longitude: mapSighting.coordinate.longitude
-                )
-                // Set the date to match
-                let _ = { sighting.dateSighted = mapSighting.dateSighted }()
+        .sheet(item: $selectedSightingForDetail) { mapSighting in
+            // Convert MapSightingItem to Sighting for the detail sheet
+            let sighting = Sighting(
+                speciesID: mapSighting.speciesID,
+                photoFileName: mapSighting.photoFileName,
+                latitude: mapSighting.coordinate.latitude,
+                longitude: mapSighting.coordinate.longitude
+            )
+            // Set the date to match
+            let _ = { sighting.dateSighted = mapSighting.dateSighted }()
 
-                SightingDetailSheet(
-                    sighting: sighting,
-                    speciesName: mapSighting.speciesName,
-                    showViewOnMapButton: false // Already on map!
-                )
-            }
+            SightingDetailSheet(
+                sighting: sighting,
+                speciesName: mapSighting.speciesName,
+                scientificName: mapSighting.scientificName,
+                rarity: mapSighting.rarity,
+                showViewOnMapButton: false, // Already on map!
+                showViewSpeciesButton: true,
+                onViewSpecies: { speciesID in
+                    selectedSightingForDetail = nil // Dismiss sheet
+                    onSpeciesTapped?(speciesID)
+                }
+            )
         }
     }
 
     // MARK: - Map Content
 
     private var mapContent: some View {
-        // Note: We don't use Map's selection: binding because it's unreliable
-        // with custom Annotation views. Instead we handle taps directly.
-        Map(position: $viewModel.cameraPosition) {
-            // User location
-            UserAnnotation()
-
-            // Mushroom sighting pins
-            ForEach(viewModel.filteredSightings) { sighting in
-                Annotation(
-                    sighting.speciesName,
-                    coordinate: sighting.coordinate,
-                    anchor: .bottom
-                ) {
-                    // Use Button for reliable tap handling over Map gestures
-                    Button {
-                        viewModel.selectedSighting = sighting
-                    } label: {
-                        MushroomPinView(
-                            rarity: sighting.rarity,
-                            isSelected: viewModel.selectedSighting?.id == sighting.id
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    // Expand hit area for easier tapping (Apple recommends 44pt minimum)
-                    .frame(width: 56, height: 56)
-                    .contentShape(Rectangle())
-                }
+        ClusteredMapView(
+            sightings: viewModel.filteredSightings,
+            selectedSighting: viewModel.selectedSighting,
+            region: $viewModel.mapRegion,
+            onSightingSelected: { sighting in
+                viewModel.selectedSighting = sighting
+            },
+            onClusterSelected: { _ in
+                // When a cluster is tapped, the map zooms in automatically
             }
-        }
-        .mapStyle(.standard(elevation: .realistic))
-        .mapControls {
-            MapCompass()
-            MapScaleView()
-        }
+        )
+        .ignoresSafeArea()
     }
 
     // MARK: - Search/Filter Bar
@@ -195,9 +180,20 @@ struct MapView: View {
             // Search field
             TextField("Search species...", text: $viewModel.searchText)
                 .font(.nunito(16, weight: .regular))
-                .foregroundColor(AppColors.textLight)
+                .foregroundColor(AppColors.textDark)
+
+            // Clear button
+            if !viewModel.searchText.isEmpty {
+                Button(action: {
+                    viewModel.searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(AppColors.textLight)
+                }
+            }
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .frame(height: 56)
         .background(.white)
         .cornerRadius(100)
@@ -516,6 +512,7 @@ struct RoundedCorner: Shape {
                 id: UUID(),
                 speciesID: "golden-chanterelle",
                 speciesName: "Golden Chanterelle",
+                scientificName: "Cantharellus cibarius",
                 locationName: "Discovery Park, Seattle",
                 coordinate: CLLocationCoordinate2D(latitude: 47.6615, longitude: -122.4176),
                 dateSighted: Date(),
@@ -531,6 +528,7 @@ struct RoundedCorner: Shape {
                 id: UUID(),
                 speciesID: "lions-mane",
                 speciesName: "Lion's Mane",
+                scientificName: "Hericium erinaceus",
                 locationName: "Rattlesnake Ledge Trail",
                 coordinate: CLLocationCoordinate2D(latitude: 47.4351, longitude: -121.7733),
                 dateSighted: Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date(),

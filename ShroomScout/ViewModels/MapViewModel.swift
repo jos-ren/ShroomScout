@@ -18,6 +18,7 @@ struct MapSightingItem: Identifiable, Equatable, Hashable {
     let id: UUID
     let speciesID: String
     let speciesName: String
+    let scientificName: String
     let locationName: String?
     let coordinate: CLLocationCoordinate2D
     let dateSighted: Date
@@ -58,6 +59,12 @@ final class MapViewModel: ObservableObject {
 
     /// Current map camera position
     @Published var cameraPosition: MapCameraPosition = .automatic
+
+    /// Current map region (for ClusteredMapView compatibility)
+    @Published var mapRegion: MKCoordinateRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 47.6062, longitude: -122.3321), // Seattle default
+        span: MKCoordinateSpan(latitudeDelta: 0.5, longitudeDelta: 0.5)
+    )
 
     /// Search text for filtering species
     @Published var searchText: String = ""
@@ -162,32 +169,41 @@ final class MapViewModel: ObservableObject {
             return
         }
 
+        let newRegion = MKCoordinateRegion(
+            center: location.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )
+
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            cameraPosition = .region(MKCoordinateRegion(
-                center: location.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-            ))
+            cameraPosition = .region(newRegion)
+            mapRegion = newRegion
         }
     }
 
     /// Center the map on a specific sighting
     func centerOnSighting(_ sighting: MapSightingItem) {
+        let newRegion = MKCoordinateRegion(
+            center: sighting.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        )
+
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            cameraPosition = .region(MKCoordinateRegion(
-                center: sighting.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-            ))
+            cameraPosition = .region(newRegion)
+            mapRegion = newRegion
             selectedSighting = sighting
         }
     }
 
     /// Center the map on specific coordinates
     func centerOnCoordinate(latitude: Double, longitude: Double) {
+        let newRegion = MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
+            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        )
+
         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            cameraPosition = .region(MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-            ))
+            cameraPosition = .region(newRegion)
+            mapRegion = newRegion
         }
     }
 
@@ -231,6 +247,7 @@ final class MapViewModel: ObservableObject {
                     id: sighting.id,
                     speciesID: sighting.speciesID,
                     speciesName: matchingSpecies.commonName,
+                    scientificName: matchingSpecies.scientificName,
                     locationName: sighting.locationName,
                     coordinate: sighting.coordinate,
                     dateSighted: sighting.dateSighted,
@@ -262,6 +279,7 @@ final class MapViewModel: ObservableObject {
                 id: UUID(),
                 speciesID: location.species.id,
                 speciesName: location.species.commonName,
+                scientificName: location.species.scientificName,
                 locationName: location.name,
                 coordinate: CLLocationCoordinate2D(latitude: location.lat, longitude: location.lon),
                 dateSighted: Calendar.current.date(byAdding: .day, value: -index * 2, to: Date()) ?? Date(),
@@ -295,17 +313,17 @@ final class MapViewModel: ObservableObject {
 
     private func updateSightingDistances() {
         sightings = sightings.map { sighting in
-            var updated = sighting
             let newDistance = locationService.formattedDistance(to: sighting.coordinate)
             return MapSightingItem(
-                id: updated.id,
-                speciesID: updated.speciesID,
-                speciesName: updated.speciesName,
-                locationName: updated.locationName,
-                coordinate: updated.coordinate,
-                dateSighted: updated.dateSighted,
-                rarity: updated.rarity,
-                photoFileName: updated.photoFileName,
+                id: sighting.id,
+                speciesID: sighting.speciesID,
+                speciesName: sighting.speciesName,
+                scientificName: sighting.scientificName,
+                locationName: sighting.locationName,
+                coordinate: sighting.coordinate,
+                dateSighted: sighting.dateSighted,
+                rarity: sighting.rarity,
+                photoFileName: sighting.photoFileName,
                 distance: newDistance
             )
         }

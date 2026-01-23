@@ -18,31 +18,35 @@ struct SightingCalloutView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Close button
-            HStack {
-                Spacer()
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(AppColors.textLight)
-                        .frame(width: 28, height: 28)
-                        .background(AppColors.cream)
-                        .clipShape(Circle())
-                }
-            }
-            .padding(.bottom, 8)
-
             HStack(spacing: 16) {
                 // Photo thumbnail
                 photoThumbnail
 
                 // Info
                 VStack(alignment: .leading, spacing: 6) {
-                    // Species name
-                    Text(sighting.speciesName)
-                        .font(.nunito(18, weight: .bold))
-                        .foregroundColor(AppColors.textDark)
-                        .lineLimit(1)
+                    // Species name with close button
+                    HStack {
+                        Text(sighting.speciesName)
+                            .font(.nunito(18, weight: .bold))
+                            .foregroundColor(AppColors.textDark)
+                            .lineLimit(1)
+
+                        Spacer()
+
+                        // Close button
+                        Button(action: onDismiss) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 10, weight: .semibold))
+                                .foregroundColor(AppColors.textDark)
+                                .frame(width: 24, height: 24)
+                                .background(.thinMaterial)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.black.opacity(0.08), lineWidth: 0.5)
+                                )
+                        }
+                    }
 
                     // Rarity badge
                     HStack(spacing: 6) {
@@ -60,8 +64,6 @@ struct SightingCalloutView: View {
                         .font(.nunito(12, weight: .medium))
                         .foregroundColor(AppColors.textLight)
                 }
-
-                Spacer()
             }
 
             // View button
@@ -295,6 +297,7 @@ struct UserLocationMarker: View {
                 id: UUID(),
                 speciesID: "golden-chanterelle",
                 speciesName: "Golden Chanterelle",
+                scientificName: "Cantharellus cibarius",
                 locationName: "Discovery Park, Seattle",
                 coordinate: CLLocationCoordinate2D(latitude: 47.6615, longitude: -122.4176),
                 dateSighted: Date(),

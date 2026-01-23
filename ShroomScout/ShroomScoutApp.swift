@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct ShroomScoutApp: App {
+    @State private var showLaunchScreen = true
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Species.self,
@@ -31,7 +33,22 @@ struct ShroomScoutApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            ZStack {
+                ContentView()
+
+                if showLaunchScreen {
+                    LaunchView()
+                        .transition(.opacity)
+                        .zIndex(1)
+                }
+            }
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        showLaunchScreen = false
+                    }
+                }
+            }
         }
         .modelContainer(sharedModelContainer)
     }

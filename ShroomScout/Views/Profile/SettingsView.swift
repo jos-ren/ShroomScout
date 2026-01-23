@@ -18,11 +18,10 @@ struct SettingsView: View {
     @State private var editedName = ""
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Account Section
-                    SettingsSection(title: "Account") {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Account Section
+                SettingsSection(title: "Account") {
                         SettingsRow(
                             icon: "person.fill",
                             title: "Edit Profile Name",
@@ -124,39 +123,28 @@ struct SettingsView: View {
                 .padding(.top, 16)
             }
             .background(AppColors.background)
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(AppColors.textDark)
-                    }
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(false)
+        .sheet(isPresented: $showEditNameSheet) {
+            EditNameSheet(
+                name: $editedName,
+                onSave: {
+                    viewModel.updateDisplayName(editedName)
+                    showEditNameSheet = false
                 }
-            }
-            .sheet(isPresented: $showEditNameSheet) {
-                EditNameSheet(
-                    name: $editedName,
-                    onSave: {
-                        viewModel.updateDisplayName(editedName)
-                        showEditNameSheet = false
-                    }
-                )
-                .presentationDetents([.height(220)])
-            }
-            .sheet(isPresented: $showRegionSheet) {
-                RegionPickerSheet(
-                    selectedRegion: viewModel.userProfile?.selectedRegion ?? "pnw",
-                    onSelect: { region in
-                        viewModel.updateRegion(region)
-                        showRegionSheet = false
-                    }
-                )
-                .presentationDetents([.medium])
-            }
+            )
+            .presentationDetents([.height(220)])
+        }
+        .sheet(isPresented: $showRegionSheet) {
+            RegionPickerSheet(
+                selectedRegion: viewModel.userProfile?.selectedRegion ?? "pnw",
+                onSelect: { region in
+                    viewModel.updateRegion(region)
+                    showRegionSheet = false
+                }
+            )
+            .presentationDetents([.medium])
         }
     }
 }

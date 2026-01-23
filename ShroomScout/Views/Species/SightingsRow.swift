@@ -7,10 +7,13 @@
 
 import SwiftUI
 import CoreLocation
+import MapKit
 
 struct SightingsRow: View {
     let sightings: [Sighting]
     var speciesName: String = ""
+    var scientificName: String = ""
+    var rarity: Rarity = .common
     var onNavigateToLocation: ((Double, Double) -> Void)?
 
     @State private var selectedSighting: Sighting?
@@ -42,6 +45,8 @@ struct SightingsRow: View {
             SightingDetailSheet(
                 sighting: sighting,
                 speciesName: speciesName,
+                scientificName: scientificName,
+                rarity: rarity,
                 onNavigateToLocation: { lat, lon in
                     selectedSighting = nil // Dismiss sheet
                     onNavigateToLocation?(lat, lon)
@@ -131,52 +136,79 @@ private struct SightingThumbnail: View {
 struct SightingDetailSheet: View {
     let sighting: Sighting
     var speciesName: String = ""
+    var scientificName: String = ""
+    var rarity: Rarity = .common
     var showViewOnMapButton: Bool = true
+    var showViewSpeciesButton: Bool = false
     var onNavigateToLocation: ((Double, Double) -> Void)?
+    var onViewSpecies: ((String) -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     @State private var locationName: String = "Loading location..."
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text(speciesName.isEmpty ? "Sighting Details" : speciesName)
+                    .font(.nunito(24, weight: .bold))
+                    .foregroundColor(AppColors.textDark)
+
+                Spacer()
+
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(AppColors.textDark)
+                        .frame(width: 32, height: 32)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
+            .padding(.bottom, 12)
+
             ScrollView {
-                VStack(spacing: 24) {
-                    // Large photo
+                VStack(spacing: 12) {
+                    // Photo card
                     photoSection
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 4)
 
-                    // Details
-                    VStack(spacing: 16) {
-                        // Species name
-                        if !speciesName.isEmpty {
-                            detailRow(icon: "leaf.fill", title: "Species", value: speciesName)
-                        }
+                    // Date discovered card
+                    detailCard(icon: "calendar", title: "Date Discovered", value: formattedDateTime)
+                        .padding(.horizontal, 24)
 
-                        // Date and time
-                        detailRow(icon: "calendar", title: "Date", value: formattedDate)
-                        detailRow(icon: "clock.fill", title: "Time", value: formattedTime)
+                    // Location card
+                    detailCard(icon: "mappin.circle.fill", title: "Location", value: locationName)
+                        .padding(.horizontal, 24)
 
-                        // Location
-                        detailRow(icon: "mappin.circle.fill", title: "Location", value: locationName)
+                    // Coordinates card
+                    detailCard(icon: "location.circle.fill", title: "Coordinates", value: formattedCoordinates)
+                        .padding(.horizontal, 24)
 
-                        // Coordinates
-                        detailRow(
-                            icon: "location.fill",
-                            title: "Coordinates",
-                            value: String(format: "%.4f, %.4f", sighting.latitude, sighting.longitude)
-                        )
-                    }
-                    .padding(.horizontal, 24)
-
-                    // View on Map button (hidden when already on map)
+                    // Mini map preview with button overlay
                     if showViewOnMapButton {
+                        miniMapSection
+                            .padding(.horizontal, 24)
+                            .padding(.top, 4)
+                    }
+
+                    // View Species button (for map sighting details)
+                    if showViewSpeciesButton {
                         Button(action: {
-                            onNavigateToLocation?(sighting.latitude, sighting.longitude)
+                            onViewSpecies?(sighting.speciesID)
                         }) {
                             HStack(spacing: 8) {
-                                Image(systemName: "map.fill")
+                                Image(systemName: "leaf.fill")
                                     .font(.system(size: 16, weight: .semibold))
 
-                                Text("View on Map")
+                                Text("View Species Details")
                                     .font(.nunito(16, weight: .bold))
                             }
                             .foregroundColor(.white)
@@ -188,24 +220,12 @@ struct SightingDetailSheet: View {
                         }
                         .buttonStyle(BounceButtonStyle())
                         .padding(.horizontal, 24)
-                        .padding(.top, 8)
                     }
                 }
-                .padding(.vertical, 24)
-            }
-            .background(AppColors.background)
-            .navigationTitle("Sighting Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .font(.nunito(16, weight: .semibold))
-                    .foregroundColor(AppColors.primaryGreen)
-                }
+                .padding(.bottom, 24)
             }
         }
+        .background(AppColors.background)
         .onAppear {
             reverseGeocodeLocation()
         }
@@ -218,27 +238,26 @@ struct SightingDetailSheet: View {
             if let image = loadImage() {
                 Image(uiImage: image)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .aspectRatio(contentMode: .fill)
                     .frame(maxWidth: .infinity)
-                    .cornerRadius(20)
+                    .frame(height: 220)
+                    .clipped()
             } else {
                 // Try asset catalog
                 Image(sighting.photoFileName)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .aspectRatio(contentMode: .fill)
                     .frame(maxWidth: .infinity)
-                    .frame(minHeight: 250)
-                    .cornerRadius(20)
+                    .frame(height: 220)
+                    .clipped()
             }
         }
-        .padding(.horizontal, 24)
-        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 
-    // MARK: - Detail Row
+    // MARK: - Detail Card
 
-    private func detailRow(icon: String, title: String, value: String) -> some View {
-        HStack(spacing: 16) {
+    private func detailCard(icon: String, title: String, value: String) -> some View {
+        HStack(spacing: 14) {
             // Icon
             ZStack {
                 Circle()
@@ -251,7 +270,7 @@ struct SightingDetailSheet: View {
             }
 
             // Text
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.nunito(12, weight: .regular))
                     .foregroundColor(AppColors.textLight)
@@ -259,16 +278,25 @@ struct SightingDetailSheet: View {
                 Text(value)
                     .font(.nunito(16, weight: .semibold))
                     .foregroundColor(AppColors.textDark)
+                    .textSelection(.enabled)
             }
 
             Spacer()
         }
-        .padding(16)
-        .background(AppColors.cream)
-        .cornerRadius(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(.white)
+        .cornerRadius(24)
+        .shadow(color: .black.opacity(0.1), radius: 7.5, x: 0, y: 5)
     }
 
     // MARK: - Formatting
+
+    private var formattedCoordinates: String {
+        let lat = String(format: "%.4f", sighting.latitude)
+        let lon = String(format: "%.4f", sighting.longitude)
+        return "\(lat), \(lon)"
+    }
 
     private var formattedDate: String {
         let formatter = DateFormatter()
@@ -280,6 +308,72 @@ struct SightingDetailSheet: View {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         return formatter.string(from: sighting.dateSighted)
+    }
+
+    private var formattedDateTime: String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM d, yyyy"
+        let timeFormatter = DateFormatter()
+        timeFormatter.timeStyle = .short
+        return "\(dateFormatter.string(from: sighting.dateSighted)) at \(timeFormatter.string(from: sighting.dateSighted))"
+    }
+
+    // MARK: - Mini Map Section
+
+    private var miniMapSection: some View {
+        ZStack {
+            // Static map with custom mushroom pin
+            // Offset center slightly south so pin appears in upper portion of map
+            Map(initialPosition: .region(MKCoordinateRegion(
+                center: CLLocationCoordinate2D(latitude: sighting.latitude - 0.0015, longitude: sighting.longitude),
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            ))) {
+                Annotation("", coordinate: CLLocationCoordinate2D(latitude: sighting.latitude, longitude: sighting.longitude)) {
+                    // Custom mushroom pin - circle with rarity color and mushroom emoji
+                    ZStack {
+                        Circle()
+                            .fill(AppColors.color(for: rarity))
+                            .frame(width: 36, height: 36)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 2)
+                            )
+                            .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+
+                        Text("🍄")
+                            .font(.system(size: 18))
+                    }
+                }
+            }
+            .disabled(true)
+            .frame(height: 140)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .id(sighting.id) // Force map recreation when sighting changes
+
+            // Button overlay
+            VStack {
+                Spacer()
+                Button(action: {
+                    onNavigateToLocation?(sighting.latitude, sighting.longitude)
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.system(size: 12, weight: .semibold))
+
+                        Text("View on Map")
+                            .font(.nunito(13, weight: .bold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(AppColors.primaryGreen)
+                    .clipShape(Capsule())
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                }
+                .buttonStyle(BounceButtonStyle())
+                .padding(.bottom, 12)
+            }
+        }
     }
 
     // MARK: - Helpers
@@ -347,7 +441,8 @@ struct SightingDetailSheet: View {
                     longitude: -122.3321
                 )
             ],
-            speciesName: "Golden Chanterelle"
+            speciesName: "Golden Chanterelle",
+            scientificName: "Cantharellus cibarius"
         )
 
         // Multiple sightings
@@ -372,7 +467,8 @@ struct SightingDetailSheet: View {
                     longitude: -121.7733
                 )
             ],
-            speciesName: "Golden Chanterelle"
+            speciesName: "Golden Chanterelle",
+            scientificName: "Cantharellus cibarius"
         )
     }
     .padding(24)
@@ -387,6 +483,7 @@ struct SightingDetailSheet: View {
             latitude: 47.6062,
             longitude: -122.3321
         ),
-        speciesName: "Golden Chanterelle"
+        speciesName: "Golden Chanterelle",
+        scientificName: "Cantharellus cibarius"
     )
 }

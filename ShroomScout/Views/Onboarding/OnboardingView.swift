@@ -14,8 +14,9 @@ struct OnboardingView: View {
 
     @State private var currentPage = 0
     @State private var hasAgreedToDisclaimer = false
+    @State private var selectedRegion = "pnw"
 
-    private let totalPages = 5
+    private let totalPages = 6
 
     var body: some View {
         ZStack {
@@ -32,17 +33,28 @@ struct OnboardingView: View {
                     HowItWorksPageView()
                         .tag(1)
 
-                    CollectionPreviewPageView()
+                    RegionSelectionPageView(selectedRegion: $selectedRegion)
                         .tag(2)
 
-                    SafetyDisclaimerPageView(hasAgreed: $hasAgreedToDisclaimer)
+                    CollectionPreviewPageView()
                         .tag(3)
 
-                    ReadyPageView(onComplete: completeOnboarding)
+                    SafetyDisclaimerPageView(hasAgreed: $hasAgreedToDisclaimer)
                         .tag(4)
+
+                    ReadyPageView()
+                        .tag(5)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentPage)
+                .onChange(of: currentPage) { oldValue, newValue in
+                    // Prevent advancing past safety disclaimer without agreement
+                    if newValue == 5 && !hasAgreedToDisclaimer {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            currentPage = 4
+                        }
+                    }
+                }
 
                 // Bottom controls
                 bottomControls
@@ -68,7 +80,7 @@ struct OnboardingView: View {
     private var continueButton: some View {
         if currentPage < totalPages - 1 {
             // Normal continue button
-            let isDisabled = currentPage == 3 && !hasAgreedToDisclaimer
+            let isDisabled = currentPage == 4 && !hasAgreedToDisclaimer
 
             AppButton("Continue", style: .secondary) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -78,10 +90,32 @@ struct OnboardingView: View {
             .opacity(isDisabled ? 0.5 : 1.0)
             .disabled(isDisabled)
         } else {
-            // Empty spacer to maintain layout - Ready page has its own button
-            Color.clear
-                .frame(height: 56)
+            // Start collecting button on final page
+            startCollectingButton
         }
+    }
+
+    private var startCollectingButton: some View {
+        Button {
+            completeOnboarding()
+        } label: {
+            HStack(spacing: 8) {
+                Text("Start Collecting!")
+                    .font(.nunito(18, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(AppColors.coral)
+            .cornerRadius(28)
+            .shadow(
+                color: AppColors.coral.opacity(0.4),
+                radius: 15,
+                x: 0,
+                y: 8
+            )
+        }
+        .buttonStyle(BounceButtonStyle())
     }
 
     // MARK: - Actions
@@ -99,6 +133,7 @@ struct OnboardingView: View {
         // Update profile
         profile.hasCompletedOnboarding = true
         profile.hasAgreedToDisclaimer = hasAgreedToDisclaimer
+        profile.selectedRegion = selectedRegion
 
         // Save changes
         try? modelContext.save()

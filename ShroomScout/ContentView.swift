@@ -44,7 +44,10 @@ struct ContentView: View {
                 Group {
                     switch selectedTab {
                     case .home:
-                        HomeView(onSpeciesTapped: navigateToSpecies)
+                        HomeView(
+                            onSpeciesTapped: navigateToSpecies,
+                            onViewCollection: { selectedTab = .collection }
+                        )
                     case .collection:
                         CollectionView(onSpeciesTapped: navigateToSpecies)
                     case .scan:
@@ -93,21 +96,8 @@ struct ContentView: View {
                             region: "pnw",
                             referenceImageName: sampleSpecies.imageName
                         )
-                        // Create sample sightings for demo
-                        let sampleSightings: [Sighting] = [
-                            Sighting(
-                                speciesID: sampleSpecies.id,
-                                photoFileName: sampleSpecies.imageName,
-                                latitude: 47.6062,
-                                longitude: -122.3321
-                            ),
-                            Sighting(
-                                speciesID: sampleSpecies.id,
-                                photoFileName: sampleSpecies.imageName,
-                                latitude: 47.6615,
-                                longitude: -122.4176
-                            )
-                        ]
+                        // Create sample sightings using species-specific locations (matching map data)
+                        let sampleSightings = sampleSightingsForSpecies(sampleSpecies)
                         SpeciesDetailView(
                             species: species,
                             userSightings: sampleSightings,
@@ -141,6 +131,41 @@ struct ContentView: View {
         pendingMapLocation = (latitude: latitude, longitude: longitude)
         navigationPath.removeLast(navigationPath.count) // Pop all views
         selectedTab = .map
+    }
+
+    /// Returns sample sightings for a species with locations matching the map data
+    private func sampleSightingsForSpecies(_ species: SampleSpecies) -> [Sighting] {
+        // Sample locations matching MapViewModel.loadSampleData()
+        let sampleLocations: [String: (lat: Double, lon: Double, name: String)] = [
+            "golden-chanterelle": (47.6615, -122.4176, "Discovery Park, Seattle"),
+            "lions-mane": (47.4351, -121.7733, "Rattlesnake Ledge Trail"),
+            "chicken-of-woods": (47.8021, -123.6044, "Olympic National Forest"),
+            "fly-agaric": (46.8800, -121.7269, "Mount Rainier NP"),
+            "destroying-angel": (48.7718, -121.2985, "North Cascades")
+        ]
+
+        if let location = sampleLocations[species.id] {
+            return [
+                Sighting(
+                    speciesID: species.id,
+                    photoFileName: species.imageName,
+                    latitude: location.lat,
+                    longitude: location.lon,
+                    locationName: location.name
+                )
+            ]
+        } else {
+            // Fallback for species not in the map
+            return [
+                Sighting(
+                    speciesID: species.id,
+                    photoFileName: species.imageName,
+                    latitude: 47.6062,
+                    longitude: -122.3321,
+                    locationName: "Seattle, WA"
+                )
+            ]
+        }
     }
 }
 

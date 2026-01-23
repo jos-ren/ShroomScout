@@ -15,51 +15,47 @@ struct UndiscoveredSpeciesDetailView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // Background
-            AppColors.background
-                .ignoresSafeArea()
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                // Hero section with mystery vibe
+                heroSection
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    // Hero section with mystery vibe
-                    heroSection
-
-                    // Content
-                    VStack(spacing: 24) {
-                        // Title card
-                        titleCard
-                            .offset(y: -48)
-
-                        // Main content
-                        VStack(spacing: 24) {
-                            // Ready to discover prompt
-                            discoverPromptCard
-
-                            // Where to find
-                            whereToFindCard
-
-                            // About (locked)
-                            aboutLockedCard
-
-                            // Start scanning button
-                            AppButton("Start Scanning", style: .primary) {
-                                onStartScanning?()
-                                dismiss()
-                            }
-                        }
+                // Content
+                VStack(spacing: 24) {
+                    // Title card
+                    titleCard
                         .offset(y: -48)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
-                }
-            }
-            .ignoresSafeArea(edges: .top)
 
-            // Back button
-            floatingBackButton
+                    // Main content
+                    VStack(spacing: 24) {
+                        // Ready to discover prompt
+                        discoverPromptCard
+
+                        // Where to find
+                        whereToFindCard
+
+                        // Identification tips
+                        identificationTipsCard
+
+                        // About (locked)
+                        aboutLockedCard
+
+                        // Start scanning button
+                        AppButton("Start Scanning", style: .primary) {
+                            onStartScanning?()
+                            dismiss()
+                        }
+                    }
+                    .offset(y: -48)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+            }
         }
-        .navigationBarHidden(true)
+        .background(AppColors.background)
+        .ignoresSafeArea(edges: .top)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     // MARK: - Hero Section
@@ -104,28 +100,6 @@ struct UndiscoveredSpeciesDetailView: View {
                 }
             }
             .frame(height: 320)
-
-            // Not Discovered badge
-            VStack {
-                HStack {
-                    Spacer()
-
-                    HStack(spacing: 8) {
-                        Text("Not Discovered")
-                            .font(.nunito(14, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.4))
-                    .cornerRadius(100)
-                    .padding(.trailing, 16)
-                    .padding(.top, 16)
-                }
-
-                Spacer()
-            }
-            .frame(height: 320)
         }
     }
 
@@ -133,27 +107,20 @@ struct UndiscoveredSpeciesDetailView: View {
 
     private var titleCard: some View {
         AppCard {
-            HStack(spacing: 16) {
-                // Mascot
-                MascotView(expression: .curious, size: 128)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(species.commonName)
+                    .font(.nunito(30, weight: .bold))
+                    .foregroundColor(AppColors.textDark)
 
-                // Info
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(species.commonName)
-                        .font(.nunito(30, weight: .bold))
-                        .foregroundColor(AppColors.textDark)
+                Text("Unknown species")
+                    .font(.nunito(18, weight: .regular))
+                    .foregroundColor(AppColors.textLight)
 
-                    Text("Unknown species")
-                        .font(.nunito(18, weight: .regular))
-                        .foregroundColor(AppColors.textLight)
-
-                    // Rarity badge
-                    AppBadge.rarity(species.rarity)
-                        .padding(.top, 8)
-                }
-
-                Spacer()
+                // Rarity badge
+                AppBadge.rarity(species.rarity)
+                    .padding(.top, 8)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -237,6 +204,35 @@ struct UndiscoveredSpeciesDetailView: View {
         }
     }
 
+    // MARK: - Identification Tips Card
+
+    private var identificationTipsCard: some View {
+        AppCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("How to Identify")
+                    .font(.nunito(18, weight: .bold))
+                    .foregroundColor(AppColors.textDark)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(species.keyFeatures, id: \.self) { feature in
+                        HStack(alignment: .top, spacing: 12) {
+                            Text("\u{2022}")
+                                .font(.nunito(14, weight: .regular))
+                                .foregroundColor(AppColors.primaryGreen)
+                                .padding(.top, 1)
+
+                            Text(feature)
+                                .font(.nunito(14, weight: .regular))
+                                .foregroundColor(AppColors.textDark)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
     // MARK: - About Locked Card
 
     private var aboutLockedCard: some View {
@@ -246,48 +242,13 @@ struct UndiscoveredSpeciesDetailView: View {
                     .font(.nunito(18, weight: .bold))
                     .foregroundColor(AppColors.textDark)
 
-                Text("This species has not been discovered yet.")
-                    .font(.nunito(16, weight: .regular))
-                    .foregroundColor(AppColors.textDark)
-
-                // Divider
-                Rectangle()
-                    .fill(AppColors.cream)
-                    .frame(height: 1)
-                    .padding(.top, 4)
-
-                // Unlock message
-                Text("Discover this mushroom to unlock full details, identification tips, and more! 🔓")
+                Text("Discover this mushroom to unlock its full story, fun facts, and add it to your collection!")
                     .font(.nunito(14, weight: .regular))
                     .foregroundColor(AppColors.textLight)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
             }
         }
     }
 
-    // MARK: - Floating Back Button
-
-    private var floatingBackButton: some View {
-        HStack {
-            Button(action: { dismiss() }) {
-                ZStack {
-                    Circle()
-                        .fill(Color.black.opacity(0.4))
-                        .frame(width: 40, height: 40)
-
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-            }
-            .buttonStyle(BounceButtonStyle())
-            .padding(.leading, 16)
-            .padding(.top, 16)
-
-            Spacer()
-        }
-    }
 }
 
 // MARK: - Preview

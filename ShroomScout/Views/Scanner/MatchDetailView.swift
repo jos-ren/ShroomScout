@@ -22,47 +22,49 @@ struct MatchDetailView: View {
     @State private var checkmarkScale: CGFloat = 0.0
 
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .bottom) {
             // Background
             AppColors.background
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // Header bar
-                headerBar
+            // Scrollable content
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    // Captured photo with overlay
+                    capturedPhotoSection
 
-                // Scrollable content
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        // Captured photo with overlay
-                        capturedPhotoSection
+                    // Confidence indicator
+                    confidenceSection
 
-                        // Confidence indicator
-                        confidenceSection
+                    // Species info card
+                    speciesInfoCard
 
-                        // Species info card
-                        speciesInfoCard
+                    // Safety disclaimer (moved below species card)
+                    safetyDisclaimer
 
-                        // Key features
-                        keyFeaturesSection
-
-                        // Safety disclaimer
-                        safetyDisclaimer
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 120) // Space for bottom buttons
+                    // Key features
+                    keyFeaturesSection
                 }
-
-                Spacer(minLength: 0)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 120) // Space for bottom buttons
             }
 
             // Bottom action buttons
-            VStack {
-                Spacer()
-                bottomButtons
+            bottomButtons
+        }
+        .navigationTitle("Confirm Match")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    onBack?()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(AppColors.textDark)
+                }
             }
         }
-        .navigationBarHidden(true)
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.2)) {
                 showContent = true
@@ -71,45 +73,6 @@ struct MatchDetailView: View {
                 checkmarkScale = 1.0
             }
         }
-    }
-
-    // MARK: - Header Bar
-
-    private var headerBar: some View {
-        HStack {
-            // Back button
-            Button {
-                onBack?()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(AppColors.cream)
-                        .frame(width: 40, height: 40)
-
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(AppColors.textDark)
-                }
-            }
-            .buttonStyle(BounceButtonStyle())
-
-            Spacer()
-
-            Text("Confirm Match")
-                .font(.nunito(20, weight: .bold))
-                .foregroundColor(AppColors.textDark)
-
-            Spacer()
-
-            // Invisible spacer for centering
-            Circle()
-                .fill(.clear)
-                .frame(width: 40, height: 40)
-        }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .background(.white)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 
     // MARK: - Captured Photo Section
@@ -146,23 +109,30 @@ struct MatchDetailView: View {
     // MARK: - Confidence Section
 
     private var confidenceSection: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 12) {
-                Image(systemName: confidenceIcon)
-                    .font(.system(size: 24))
-                    .foregroundColor(confidenceColor)
+        HStack(spacing: 16) {
+            // Thumbnail on left
+            thumbnailView
 
-                Text(confidenceMessage)
-                    .font(.nunito(22, weight: .bold))
-                    .foregroundColor(AppColors.textDark)
+            // Confidence info on right
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Image(systemName: confidenceIcon)
+                        .font(.system(size: 20))
+                        .foregroundColor(confidenceColor)
+
+                    Text(confidenceMessage)
+                        .font(.nunito(20, weight: .bold))
+                        .foregroundColor(AppColors.textDark)
+                }
+
+                Text("\(Int(match.confidence * 100))% confidence match")
+                    .font(.nunito(14, weight: .medium))
+                    .foregroundColor(AppColors.textLight)
             }
 
-            Text("\(Int(match.confidence * 100))% confidence match")
-                .font(.nunito(14, weight: .medium))
-                .foregroundColor(AppColors.textLight)
+            Spacer()
         }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 24)
+        .padding(16)
         .frame(maxWidth: .infinity)
         .background(confidenceColor.opacity(0.1))
         .cornerRadius(16)
@@ -204,30 +174,23 @@ struct MatchDetailView: View {
 
     private var speciesInfoCard: some View {
         AppCard {
-            HStack(spacing: 16) {
-                // Thumbnail
-                thumbnailView
+            VStack(alignment: .leading, spacing: 8) {
+                Text(match.species.commonName)
+                    .font(.nunito(22, weight: .bold))
+                    .foregroundColor(AppColors.textDark)
 
-                // Info
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(match.species.commonName)
-                        .font(.nunito(22, weight: .bold))
-                        .foregroundColor(AppColors.textDark)
+                Text(match.species.scientificName)
+                    .font(.nunito(14, weight: .medium))
+                    .foregroundColor(AppColors.textLight)
+                    .italic()
 
-                    Text(match.species.scientificName)
-                        .font(.nunito(14, weight: .medium))
-                        .foregroundColor(AppColors.textLight)
-                        .italic()
-
-                    // Badges
-                    HStack(spacing: 8) {
-                        AppBadge.rarity(match.species.rarity)
-                        AppBadge.edibility(match.species.edibility)
-                    }
+                // Badges
+                HStack(spacing: 8) {
+                    AppBadge.rarity(match.species.rarity)
+                    AppBadge.edibility(match.species.edibility)
                 }
-
-                Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .opacity(showContent ? 1.0 : 0.0)
         .offset(y: showContent ? 0 : 20)

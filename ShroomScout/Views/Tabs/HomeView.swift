@@ -11,6 +11,9 @@ struct HomeView: View {
     /// Callback when a species is tapped to navigate to detail
     var onSpeciesTapped: ((String) -> Void)?
 
+    /// Callback when "View All" is tapped to navigate to collection tab
+    var onViewCollection: (() -> Void)?
+
     @State private var viewModel = HomeViewModel()
 
     var body: some View {
@@ -35,7 +38,7 @@ struct HomeView: View {
                     totalCount: viewModel.totalSpeciesCount,
                     rarityBreakdown: viewModel.rarityBreakdown
                 ) {
-                    // TODO: Navigate to collection tab
+                    onViewCollection?()
                 }
 
                 // Recent discoveries section

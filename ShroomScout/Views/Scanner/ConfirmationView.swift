@@ -57,38 +57,32 @@ struct ConfirmationView: View {
             AppColors.background
                 .ignoresSafeArea()
 
-            // Confetti layer
-            confettiLayer
+            // Main content - no scroll, everything fits
+            VStack(spacing: 16) {
+                Spacer()
 
-            // Main content
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    Spacer()
-                        .frame(height: 40)
+                // Mascot with celebration
+                mascotSection
 
-                    // Mascot with celebration
-                    mascotSection
+                // Title message
+                titleSection
 
-                    // Title message
-                    titleSection
+                // Species card
+                speciesCard
 
-                    // Species card
-                    speciesCard
+                // XP and stats in a row
+                xpAndStatsSection
 
-                    // XP earned section
-                    xpSection
+                Spacer()
 
-                    // Stats update
-                    statsSection
-
-                    // Action buttons
-                    buttonsSection
-
-                    Spacer()
-                        .frame(height: 40)
-                }
-                .padding(.horizontal, 24)
+                // Action buttons at bottom
+                buttonsSection
+                    .padding(.bottom, 24)
             }
+            .padding(.horizontal, 24)
+
+            // Confetti layer - in front of everything
+            confettiLayer
         }
         .onAppear {
             startAnimations()
@@ -98,7 +92,7 @@ struct ConfirmationView: View {
     // MARK: - Mascot Section
 
     private var mascotSection: some View {
-        AnimatedMascotView(expression: .excited, size: 120)
+        AnimatedMascotView(expression: .excited, size: 100)
             .scaleEffect(showContent ? 1.0 : 0.3)
             .opacity(showContent ? 1.0 : 0.0)
             .animation(.spring(response: 0.6, dampingFraction: 0.6).delay(0.2), value: showContent)
@@ -183,105 +177,82 @@ struct ConfirmationView: View {
         AppColors.color(for: species.rarity)
     }
 
-    // MARK: - XP Section
+    // MARK: - XP and Stats Section (Combined)
 
-    private var xpSection: some View {
-        VStack(spacing: 12) {
-            // XP earned with animated counter
-            HStack(spacing: 8) {
-                Image(systemName: "star.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(AppColors.rarityLegendary)
+    private var xpAndStatsSection: some View {
+        HStack(spacing: 12) {
+            // XP earned
+            VStack(spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 18))
+                        .foregroundColor(AppColors.rarityLegendary)
 
-                Text("+\(xpCounterValue) XP")
-                    .font(.nunito(32, weight: .bold))
-                    .foregroundColor(AppColors.textDark)
+                    Text("+\(xpCounterValue)")
+                        .font(.nunito(24, weight: .bold))
+                        .foregroundColor(AppColors.textDark)
+                }
+
+                Text("XP Earned")
+                    .font(.appCaption)
+                    .foregroundColor(AppColors.textLight)
             }
+            .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .padding(.horizontal, 32)
             .background(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(AppColors.rarityLegendary.opacity(0.15))
             )
 
-            // XP breakdown
+            // Species found
             VStack(spacing: 4) {
-                xpBreakdownRow(
-                    label: "Base (\(species.rarity.displayName))",
-                    value: DiscoveryStats.xpForRarity(species.rarity)
-                )
+                HStack(spacing: 6) {
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(AppColors.primaryGreen)
 
-                if isNewSpecies {
-                    xpBreakdownRow(
-                        label: "New Species Bonus",
-                        value: DiscoveryStats.newSpeciesBonus
-                    )
+                    Text("\(stats.totalSpeciesFound)")
+                        .font(.nunito(24, weight: .bold))
+                        .foregroundColor(AppColors.textDark)
                 }
+
+                Text("Species")
+                    .font(.appCaption)
+                    .foregroundColor(AppColors.textLight)
             }
-        }
-        .scaleEffect(showContent ? 1.0 : 0.8)
-        .opacity(showContent ? 1.0 : 0.0)
-        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.5), value: showContent)
-    }
-
-    private func xpBreakdownRow(label: String, value: Int) -> some View {
-        HStack {
-            Text(label)
-                .font(.appCaption)
-                .foregroundColor(AppColors.textLight)
-
-            Spacer()
-
-            Text("+\(value)")
-                .font(.nunito(14, weight: .semibold))
-                .foregroundColor(AppColors.primaryGreen)
-        }
-        .padding(.horizontal, 24)
-    }
-
-    // MARK: - Stats Section
-
-    private var statsSection: some View {
-        HStack(spacing: 16) {
-            statBox(
-                icon: "leaf.fill",
-                value: "\(stats.totalSpeciesFound)",
-                label: "Species Found"
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(AppColors.cream)
             )
 
-            statBox(
-                icon: "camera.fill",
-                value: "\(stats.totalSightings)",
-                label: "Total Sightings"
+            // Total sightings
+            VStack(spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(AppColors.primaryGreen)
+
+                    Text("\(stats.totalSightings)")
+                        .font(.nunito(24, weight: .bold))
+                        .foregroundColor(AppColors.textDark)
+                }
+
+                Text("Sightings")
+                    .font(.appCaption)
+                    .foregroundColor(AppColors.textLight)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(AppColors.cream)
             )
         }
         .scaleEffect(statsScale)
         .opacity(showContent ? 1.0 : 0.0)
-        .animation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.6), value: showContent)
-    }
-
-    private func statBox(icon: String, value: String, label: String) -> some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundColor(AppColors.primaryGreen)
-
-                Text(value)
-                    .font(.nunito(24, weight: .bold))
-                    .foregroundColor(AppColors.textDark)
-            }
-
-            Text(label)
-                .font(.appCaption)
-                .foregroundColor(AppColors.textLight)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(AppColors.cream)
-        )
+        .animation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.5), value: showContent)
     }
 
     // MARK: - Buttons Section

@@ -40,7 +40,7 @@ struct StatsCard: View {
                     Button {
                         onViewAll?()
                     } label: {
-                        Text("View All \u{2192}")
+                        Text("View All")
                             .font(.nunito(14, weight: .semibold))
                             .foregroundColor(AppColors.primaryGreen)
                     }

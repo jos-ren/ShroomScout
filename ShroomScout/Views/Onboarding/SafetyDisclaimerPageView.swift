@@ -31,7 +31,7 @@ struct SafetyDisclaimerPageView: View {
                         .opacity(isAnimating ? 1.0 : 0.0)
                         .offset(y: isAnimating ? 0 : 20)
 
-                    Text("Never eat wild mushrooms based on app identification. Always consult an expert.")
+                    Text("This app is for fun and educational use only. Never eat wild mushrooms without expert verification.")
                         .font(.nunito(18, weight: .regular))
                         .foregroundColor(AppColors.textLight)
                         .multilineTextAlignment(.center)
@@ -39,17 +39,11 @@ struct SafetyDisclaimerPageView: View {
                         .offset(y: isAnimating ? 0 : 20)
                 }
 
-                // Warning banner
-                warningCard
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                    .offset(y: isAnimating ? 0 : 30)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: isAnimating)
-
                 // Checkbox agreement
                 agreementCheckbox
                     .opacity(isAnimating ? 1.0 : 0.0)
                     .offset(y: isAnimating ? 0 : 20)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.5), value: isAnimating)
+                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: isAnimating)
             }
             .padding(.horizontal, 24)
 
@@ -61,37 +55,6 @@ struct SafetyDisclaimerPageView: View {
                 isAnimating = true
             }
         }
-    }
-
-    // MARK: - Warning Card
-
-    private var warningCard: some View {
-        VStack(spacing: 12) {
-            // Warning icon
-            Text("\u{26A0}\u{FE0F}")
-                .font(.system(size: 36))
-
-            // Warning text
-            VStack(spacing: 4) {
-                Text("Remember:")
-                    .font(.nunito(14, weight: .bold))
-                    .foregroundColor(AppColors.textDark)
-
-                Text("This app is for fun and education only. Never consume wild mushrooms without expert verification.")
-                    .font(.nunito(14, weight: .regular))
-                    .foregroundColor(AppColors.textDark)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding(.horizontal, 26)
-        .padding(.vertical, 26)
-        .frame(maxWidth: .infinity)
-        .background(AppColors.caution.opacity(0.1))
-        .overlay(
-            RoundedRectangle(cornerRadius: 24)
-                .stroke(AppColors.caution, lineWidth: 2)
-        )
-        .cornerRadius(24)
     }
 
     // MARK: - Agreement Checkbox

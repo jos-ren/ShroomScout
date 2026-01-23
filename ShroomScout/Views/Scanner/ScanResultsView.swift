@@ -28,9 +28,10 @@ struct IdentificationResult: Identifiable {
     let id = UUID()
     let matches: [IdentificationMatch]
 
-    /// Mock data for previews and testing
+    /// Mock data for previews and testing (9 matches total)
     static var mock: IdentificationResult {
         IdentificationResult(matches: [
+            // First 3 (highest confidence)
             IdentificationMatch(
                 species: Species(
                     id: "golden-chanterelle",
@@ -81,6 +82,110 @@ struct IdentificationResult: Identifiable {
                     referenceImageName: "oyster-mushroom"
                 ),
                 confidence: 0.57
+            ),
+            // Second 3 (medium confidence)
+            IdentificationMatch(
+                species: Species(
+                    id: "lions-mane",
+                    commonName: "Lion's Mane",
+                    scientificName: "Hericium erinaceus",
+                    speciesDescription: "A distinctive white mushroom with cascading icicle-like spines.",
+                    rarity: .rare,
+                    edibility: .edible,
+                    season: [.fall],
+                    habitat: "Dead or dying hardwood trees",
+                    identificationTips: "White, shaggy appearance. No cap - just hanging spines. Grows on hardwoods.",
+                    lookalikes: [],
+                    region: "pnw",
+                    referenceImageName: "lions-mane"
+                ),
+                confidence: 0.45
+            ),
+            IdentificationMatch(
+                species: Species(
+                    id: "chicken-of-woods",
+                    commonName: "Chicken of the Woods",
+                    scientificName: "Laetiporus sulphureus",
+                    speciesDescription: "A bright orange and yellow bracket fungus with a meaty texture.",
+                    rarity: .uncommon,
+                    edibility: .edible,
+                    season: [.summer, .fall],
+                    habitat: "Dead or dying oak and other hardwoods",
+                    identificationTips: "Bright orange-yellow color. Shelf-like growth. No gills.",
+                    lookalikes: [],
+                    region: "pnw",
+                    referenceImageName: "chicken-of-woods"
+                ),
+                confidence: 0.38
+            ),
+            IdentificationMatch(
+                species: Species(
+                    id: "king-bolete",
+                    commonName: "King Bolete",
+                    scientificName: "Boletus edulis",
+                    speciesDescription: "A prized edible mushroom with a brown cap and thick white stem.",
+                    rarity: .rare,
+                    edibility: .edible,
+                    season: [.fall],
+                    habitat: "Conifer and hardwood forests",
+                    identificationTips: "Brown cap. White pores underneath. Thick bulbous stem.",
+                    lookalikes: [],
+                    region: "pnw",
+                    referenceImageName: "king-bolete"
+                ),
+                confidence: 0.31
+            ),
+            // Third 3 (lower confidence)
+            IdentificationMatch(
+                species: Species(
+                    id: "matsutake",
+                    commonName: "Matsutake",
+                    scientificName: "Tricholoma matsutake",
+                    speciesDescription: "A highly valued mushroom with a distinctive spicy-aromatic odor.",
+                    rarity: .legendary,
+                    edibility: .edible,
+                    season: [.fall],
+                    habitat: "Under pine and fir trees in sandy soil",
+                    identificationTips: "White to brown cap. Strong cinnamon-like smell. Partial veil.",
+                    lookalikes: [],
+                    region: "pnw",
+                    referenceImageName: "matsutake"
+                ),
+                confidence: 0.24
+            ),
+            IdentificationMatch(
+                species: Species(
+                    id: "shaggy-mane",
+                    commonName: "Shaggy Mane",
+                    scientificName: "Coprinus comatus",
+                    speciesDescription: "A distinctive mushroom that dissolves into black ink as it matures.",
+                    rarity: .common,
+                    edibility: .edible,
+                    season: [.fall],
+                    habitat: "Lawns, meadows, disturbed areas",
+                    identificationTips: "Tall cylindrical cap with shaggy scales. Turns to ink when mature.",
+                    lookalikes: [],
+                    region: "pnw",
+                    referenceImageName: "shaggy-mane"
+                ),
+                confidence: 0.18
+            ),
+            IdentificationMatch(
+                species: Species(
+                    id: "hedgehog-mushroom",
+                    commonName: "Hedgehog Mushroom",
+                    scientificName: "Hydnum repandum",
+                    speciesDescription: "An edible mushroom with tooth-like spines instead of gills.",
+                    rarity: .uncommon,
+                    edibility: .edible,
+                    season: [.fall, .winter],
+                    habitat: "Conifer and hardwood forests",
+                    identificationTips: "Pale orange cap. Spines underneath instead of gills. Brittle texture.",
+                    lookalikes: [],
+                    region: "pnw",
+                    referenceImageName: "hedgehog-mushroom"
+                ),
+                confidence: 0.12
             )
         ])
     }
@@ -96,18 +201,29 @@ struct ScanResultsView: View {
     var onTryAgain: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var visibleMatchCount: Int = 3
+
+    private let maxMatches = 9
+    private let batchSize = 3
+
+    /// The matches currently visible to the user
+    private var visibleMatches: [IdentificationMatch] {
+        Array(identificationResult.matches.prefix(visibleMatchCount))
+    }
+
+    /// Whether there are more matches to show
+    private var hasMoreMatches: Bool {
+        visibleMatchCount < min(identificationResult.matches.count, maxMatches)
+    }
 
     // MARK: - Body
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // Background
-            AppColors.background
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // Header bar
-                headerBar
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                // Background
+                AppColors.background
+                    .ignoresSafeArea()
 
                 // Scrollable content
                 ScrollView(showsIndicators: false) {
@@ -128,55 +244,23 @@ struct ScanResultsView: View {
                     .padding(.bottom, 100) // Space for bottom button
                 }
 
-                Spacer(minLength: 0)
-            }
-
-            // Bottom action button
-            VStack {
-                Spacer()
+                // Bottom action button
                 bottomButton
             }
-        }
-        .navigationBarHidden(true)
-    }
-
-    // MARK: - Header Bar
-
-    private var headerBar: some View {
-        HStack {
-            // Back button
-            Button {
-                dismiss()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(AppColors.cream)
-                        .frame(width: 40, height: 40)
-
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(AppColors.textDark)
+            .navigationTitle("Scan Results")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(AppColors.textDark)
+                    }
                 }
             }
-            .buttonStyle(BounceButtonStyle())
-
-            Spacer()
-
-            Text("Scan Results")
-                .font(.nunito(20, weight: .bold))
-                .foregroundColor(AppColors.textDark)
-
-            Spacer()
-
-            // Invisible spacer for centering
-            Circle()
-                .fill(.clear)
-                .frame(width: 40, height: 40)
         }
-        .padding(.horizontal, 24)
-        .padding(.vertical, 16)
-        .background(.white)
-        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 
     // MARK: - Captured Photo Section
@@ -195,20 +279,16 @@ struct ScanResultsView: View {
     // MARK: - Warning Banner
 
     private var warningBanner: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 16))
                 .foregroundColor(AppColors.caution)
+                .padding(.top, 2)
 
-            HStack(spacing: 0) {
-                Text("Suggestions only")
-                    .font(.nunito(12, weight: .bold))
-                    .foregroundColor(AppColors.textDark)
-
-                Text(" — verify with an expert before consuming")
-                    .font(.nunito(12, weight: .regular))
-                    .foregroundColor(AppColors.textDark)
-            }
+            Text("Accuracy depends on photo quality. Better lighting and angles give more reliable results.")
+                .font(.nunito(13, weight: .medium))
+                .foregroundColor(AppColors.textDark)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -229,7 +309,7 @@ struct ScanResultsView: View {
                 .foregroundColor(AppColors.textDark)
 
             VStack(spacing: 12) {
-                ForEach(identificationResult.matches) { match in
+                ForEach(visibleMatches) { match in
                     MatchCard(
                         match: match,
                         onTap: {
@@ -244,12 +324,25 @@ struct ScanResultsView: View {
 
     // MARK: - None of These Button
 
+    @ViewBuilder
     private var noneOfTheseButton: some View {
-        Button {
-            onTryAgain?()
-        } label: {
-            Text("None of these look right")
-                .font(.nunito(14, weight: .semibold))
+        if hasMoreMatches {
+            // Show more matches button
+            Button {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    visibleMatchCount = min(visibleMatchCount + batchSize, maxMatches)
+                }
+            } label: {
+                Text("None of these look right. Show more")
+                    .font(.nunito(14, weight: .semibold))
+                    .foregroundColor(AppColors.primaryGreen)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+        } else {
+            // No more matches to show
+            Text("No more suggestions available")
+                .font(.nunito(14, weight: .medium))
                 .foregroundColor(AppColors.textLight)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)

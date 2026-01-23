@@ -21,71 +21,64 @@ struct SpeciesDetailView: View {
     private let overlayCardOffset: CGFloat = -48
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // Background
-            AppColors.background
-                .ignoresSafeArea()
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                // Hero image section
+                heroImageSection
 
-            // Scrollable content
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    // Hero image section
-                    heroImageSection
-
-                    // Content cards
-                    VStack(spacing: 24) {
-                        // Title section (overlapping hero)
-                        titleSection
-                            .offset(y: overlayCardOffset)
-
-                        // Safety disclaimer (right below title)
-                        safetyDisclaimer
-                            .offset(y: overlayCardOffset)
-
-                        // Main content with negative margin to account for title offset
-                        VStack(spacing: 24) {
-                            // User sightings (only if user has found this species)
-                            if !userSightings.isEmpty {
-                                SightingsRow(
-                                    sightings: userSightings,
-                                    speciesName: species.commonName,
-                                    onNavigateToLocation: { lat, lon in
-                                        dismiss()
-                                        onNavigateToLocation?(lat, lon)
-                                    }
-                                )
-                            }
-
-                            // Quick facts
-                            QuickFactsCard(
-                                edibility: species.edibility,
-                                seasons: species.season,
-                                habitat: species.habitat
-                            )
-
-                            // About section
-                            aboutSection
-
-                            // How to identify section
-                            identificationSection
-
-                            // Lookalikes warning (only if species has lookalikes)
-                            if !species.lookalikes.isEmpty {
-                                LookalikesCard(lookalikes: species.lookalikes)
-                            }
-                        }
+                // Content cards
+                VStack(spacing: 24) {
+                    // Title section (overlapping hero)
+                    titleSection
                         .offset(y: overlayCardOffset)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
-                }
-            }
-            .ignoresSafeArea(edges: .top)
 
-            // Floating navigation buttons
-            floatingButtons
+                    // Safety disclaimer (right below title)
+                    safetyDisclaimer
+                        .offset(y: overlayCardOffset)
+
+                    // Main content with negative margin to account for title offset
+                    VStack(spacing: 24) {
+                        // User sightings (only if user has found this species)
+                        if !userSightings.isEmpty {
+                            SightingsRow(
+                                sightings: userSightings,
+                                speciesName: species.commonName,
+                                scientificName: species.scientificName,
+                                rarity: species.rarity,
+                                onNavigateToLocation: { lat, lon in
+                                    onNavigateToLocation?(lat, lon)
+                                }
+                            )
+                        }
+
+                        // Quick facts
+                        QuickFactsCard(
+                            edibility: species.edibility,
+                            seasons: species.season,
+                            habitat: species.habitat
+                        )
+
+                        // About section
+                        aboutSection
+
+                        // How to identify section
+                        identificationSection
+
+                        // Lookalikes warning (only if species has lookalikes)
+                        if !species.lookalikes.isEmpty {
+                            LookalikesCard(lookalikes: species.lookalikes)
+                        }
+                    }
+                    .offset(y: overlayCardOffset)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+            }
         }
-        .navigationBarHidden(true)
+        .background(AppColors.background)
+        .ignoresSafeArea(edges: .top)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     // MARK: - Hero Image Section
@@ -221,41 +214,6 @@ struct SpeciesDetailView: View {
         )
     }
 
-    // MARK: - Floating Buttons
-
-    private var floatingButtons: some View {
-        HStack {
-            // Back button
-            FloatingButton(systemImage: "chevron.left") {
-                dismiss()
-            }
-
-            Spacer()
-
-            // Share button
-            FloatingButton(systemImage: "square.and.arrow.up") {
-                shareSpecies()
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-    }
-
-    // MARK: - Actions
-
-    private func shareSpecies() {
-        let text = "Check out the \(species.commonName) (\(species.scientificName)) on ShroomScout!"
-        let activityController = UIActivityViewController(
-            activityItems: [text],
-            applicationActivities: nil
-        )
-
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first,
-           let rootViewController = window.rootViewController {
-            rootViewController.present(activityController, animated: true)
-        }
-    }
 }
 
 // MARK: - Identification Tip Row
@@ -275,30 +233,6 @@ private struct IdentificationTipRow: View {
                 .foregroundColor(AppColors.textDark)
                 .fixedSize(horizontal: false, vertical: true)
         }
-    }
-}
-
-// MARK: - Floating Button
-
-private struct FloatingButton: View {
-    let systemImage: String
-    let action: () -> Void
-
-    @State private var isPressed = false
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(Color.black.opacity(0.4))
-                    .frame(width: 40, height: 40)
-
-                Image(systemName: systemImage)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-        }
-        .buttonStyle(BounceButtonStyle())
     }
 }
 

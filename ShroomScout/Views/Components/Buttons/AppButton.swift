@@ -33,21 +33,11 @@ struct AppButton: View {
     }
 
     private var fontSize: CGFloat {
-        switch style {
-        case .primary:
-            return 18
-        case .secondary:
-            return 16
-        }
+        return 16
     }
 
     private var buttonHeight: CGFloat {
-        switch style {
-        case .primary:
-            return 60
-        case .secondary:
-            return 56
-        }
+        return 56
     }
 
     var body: some View {

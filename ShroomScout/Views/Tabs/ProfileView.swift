@@ -14,45 +14,54 @@ struct ProfileView: View {
     @State private var showSettings = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Hero Header Section
-                ProfileHeaderSection(
-                    viewModel: viewModel,
-                    onSettingsTapped: { showSettings = true }
-                )
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Hero Header Section
+                    ProfileHeaderSection(viewModel: viewModel)
 
-                // Content Section
-                VStack(spacing: 24) {
-                    // Stats Grid
-                    StatsGridCard(stats: viewModel.stats)
+                    // Content Section
+                    VStack(spacing: 24) {
+                        // Stats Grid
+                        StatsGridCard(stats: viewModel.stats)
 
-                    // Rarity Breakdown
-                    RarityBreakdownCard(stats: viewModel.stats)
+                        // Rarity Breakdown
+                        RarityBreakdownCard(stats: viewModel.stats)
 
-                    // Achievements
-                    AchievementsCard(
-                        achievements: viewModel.achievements,
-                        earnedCount: viewModel.earnedAchievementsCount,
-                        totalCount: viewModel.totalAchievementsCount
-                    )
+                        // Achievements
+                        AchievementsCard(
+                            achievements: viewModel.achievements,
+                            earnedCount: viewModel.earnedAchievementsCount,
+                            totalCount: viewModel.totalAchievementsCount
+                        )
 
-                    // Streak Banner
-                    StreakBannerCard(dayStreak: viewModel.stats.dayStreak)
+                        // Streak Banner
+                        StreakBannerCard(dayStreak: viewModel.stats.dayStreak)
 
-                    Spacer(minLength: 120)
+                        Spacer(minLength: 120)
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.top, -60) // Overlap with header
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, -60) // Overlap with header
             }
-        }
-        .background(AppColors.background)
-        .ignoresSafeArea(edges: .top)
-        .onAppear {
-            viewModel.loadData(modelContext: modelContext)
-        }
-        .sheet(isPresented: $showSettings) {
-            SettingsView(viewModel: viewModel)
+            .background(AppColors.background)
+            .ignoresSafeArea(edges: .top)
+            .toolbarBackgroundVisibility(.hidden, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundStyle(.primary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .onAppear {
+                viewModel.loadData(modelContext: modelContext)
+            }
+            .navigationDestination(isPresented: $showSettings) {
+                SettingsView(viewModel: viewModel)
+            }
         }
     }
 }
@@ -61,7 +70,6 @@ struct ProfileView: View {
 
 private struct ProfileHeaderSection: View {
     let viewModel: ProfileViewModel
-    let onSettingsTapped: () -> Void
 
     var body: some View {
         ZStack {
@@ -90,25 +98,13 @@ private struct ProfileHeaderSection: View {
 
             // Content
             VStack(spacing: 24) {
-                // Top bar with title and settings
+                // Title
                 HStack {
                     Text("Profile")
                         .font(.nunito(24, weight: .bold))
                         .foregroundColor(.white)
 
                     Spacer()
-
-                    Button(action: onSettingsTapped) {
-                        Circle()
-                            .fill(.white.opacity(0.2))
-                            .frame(width: 40, height: 40)
-                            .overlay(
-                                Image(systemName: "gearshape.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(.white)
-                            )
-                    }
-                    .buttonStyle(BounceButtonStyle())
                 }
 
                 // Profile Info

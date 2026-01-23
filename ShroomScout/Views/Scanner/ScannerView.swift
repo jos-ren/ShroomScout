@@ -13,6 +13,15 @@
 
 import SwiftUI
 import AVFoundation
+import PhotosUI
+
+// MARK: - Results Flow Step
+
+enum ResultsFlowStep {
+    case results
+    case matchDetail
+    case confirmation
+}
 
 struct ScannerView: View {
     @Binding var isPresented: Bool
@@ -20,11 +29,13 @@ struct ScannerView: View {
     @StateObject private var viewModel = ScannerViewModel()
     @State private var viewfinderScale: CGFloat = 1.0
     @State private var showCaptureFlash: Bool = false
-    @State private var showMatchDetail: Bool = false
-    @State private var showConfirmation: Bool = false
+    @State private var showResultsFlow: Bool = false
     @State private var identificationResult: IdentificationResult?
-    @State private var savedResult: IdentificationResult? // Keep for "Go back" functionality
     @State private var selectedMatch: IdentificationMatch?
+    @State private var resultsFlowStep: ResultsFlowStep = .results
+    @State private var selectedPhotoItem: PhotosPickerItem?
+    @State private var isAnalyzing: Bool = false
+    @State private var scanLineOffset: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -48,6 +59,11 @@ struct ScannerView: View {
             // Captured image overlay
             if let capturedImage = viewModel.capturedImage {
                 capturedImageOverlay(image: capturedImage)
+            }
+
+            // Scanning animation overlay
+            if isAnalyzing {
+                scanningOverlay
             }
 
             // Capture flash effect
@@ -83,82 +99,8 @@ struct ScannerView: View {
         .onDisappear {
             viewModel.stopCaptureSession()
         }
-        .fullScreenCover(item: $identificationResult) { result in
-            ScanResultsView(
-                capturedImage: viewModel.capturedImage ?? ScannerViewModel.createMockCapturedImage(),
-                identificationResult: result,
-                onConfirmDiscovery: { match in
-                    // User selected a match - navigate to detail
-                    selectedMatch = match
-                    savedResult = result // Save for potential "Go back"
-                    identificationResult = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        showMatchDetail = true
-                    }
-                },
-                onTryAgain: {
-                    identificationResult = nil
-                    savedResult = nil
-                    viewModel.retakePhoto()
-                }
-            )
-        }
-        .fullScreenCover(isPresented: $showMatchDetail) {
-            if let match = selectedMatch {
-                MatchDetailView(
-                    match: match,
-                    capturedImage: viewModel.capturedImage ?? ScannerViewModel.createMockCapturedImage(),
-                    onConfirm: {
-                        // User confirmed the match
-                        showMatchDetail = false
-                        savedResult = nil
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            showConfirmation = true
-                        }
-                    },
-                    onBack: {
-                        // Go back to scan results
-                        showMatchDetail = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                            identificationResult = savedResult
-                        }
-                    }
-                )
-            }
-        }
-        .fullScreenCover(isPresented: $showConfirmation) {
-            if let match = selectedMatch {
-                ConfirmationView(
-                    species: SampleSpecies(
-                        id: match.species.id,
-                        commonName: match.species.commonName,
-                        scientificName: match.species.scientificName,
-                        description: match.species.speciesDescription,
-                        rarity: match.species.rarity,
-                        edibility: match.species.edibility,
-                        season: match.species.season,
-                        habitat: match.species.habitat,
-                        keyFeatures: match.species.identificationTips.components(separatedBy: ". "),
-                        funFact: "A fascinating mushroom find!",
-                        imageName: match.species.referenceImageName,
-                        isDiscovered: true
-                    ),
-                    isNewSpecies: true,
-                    stats: DiscoveryStats(
-                        totalSpeciesFound: 5,
-                        totalSightings: 12,
-                        xpEarned: DiscoveryStats.xpForRarity(match.species.rarity) + DiscoveryStats.newSpeciesBonus
-                    ),
-                    onViewCollection: {
-                        showConfirmation = false
-                        isPresented = false
-                    },
-                    onKeepExploring: {
-                        showConfirmation = false
-                        isPresented = false
-                    }
-                )
-            }
+        .fullScreenCover(isPresented: $showResultsFlow) {
+            resultsFlowView
         }
     }
 
@@ -250,6 +192,145 @@ struct ScannerView: View {
         }
     }
 
+    // MARK: - Scanning Overlay
+
+    private var scanningOverlay: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // Semi-transparent overlay
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+
+                // Scanning line
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                AppColors.coral.opacity(0),
+                                AppColors.coral.opacity(0.8),
+                                AppColors.coral,
+                                AppColors.coral.opacity(0.8),
+                                AppColors.coral.opacity(0)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(height: 4)
+                    .shadow(color: AppColors.coral.opacity(0.8), radius: 8, x: 0, y: 0)
+                    .offset(y: scanLineOffset)
+
+                // Analyzing text
+                VStack(spacing: 16) {
+                    Spacer()
+
+                    Text("Analyzing...")
+                        .font(.nunito(18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color.black.opacity(0.6))
+                        .cornerRadius(20)
+
+                    Spacer()
+                        .frame(height: 120)
+                }
+            }
+            .onAppear {
+                // Start scanning animation
+                let height = geometry.size.height
+                scanLineOffset = -height / 2
+
+                withAnimation(
+                    .easeInOut(duration: 0.8)
+                    .repeatForever(autoreverses: true)
+                ) {
+                    scanLineOffset = height / 2
+                }
+            }
+            .onDisappear {
+                scanLineOffset = 0
+            }
+        }
+    }
+
+    // MARK: - Results Flow View
+
+    @ViewBuilder
+    private var resultsFlowView: some View {
+        if let result = identificationResult {
+            switch resultsFlowStep {
+            case .results:
+                ScanResultsView(
+                    capturedImage: viewModel.capturedImage ?? ScannerViewModel.createMockCapturedImage(),
+                    identificationResult: result,
+                    onConfirmDiscovery: { match in
+                        // User selected a match - navigate to detail without animation
+                        selectedMatch = match
+                        resultsFlowStep = .matchDetail
+                    },
+                    onTryAgain: {
+                        // Close results and retake
+                        showResultsFlow = false
+                        identificationResult = nil
+                        resultsFlowStep = .results
+                        viewModel.retakePhoto()
+                    }
+                )
+            case .matchDetail:
+                if let match = selectedMatch {
+                    MatchDetailView(
+                        match: match,
+                        capturedImage: viewModel.capturedImage ?? ScannerViewModel.createMockCapturedImage(),
+                        onConfirm: {
+                            // User confirmed the match - show confirmation without animation
+                            resultsFlowStep = .confirmation
+                        },
+                        onBack: {
+                            // Go back to results without animation
+                            resultsFlowStep = .results
+                        }
+                    )
+                }
+            case .confirmation:
+                if let match = selectedMatch {
+                    ConfirmationView(
+                        species: SampleSpecies(
+                            id: match.species.id,
+                            commonName: match.species.commonName,
+                            scientificName: match.species.scientificName,
+                            description: match.species.speciesDescription,
+                            rarity: match.species.rarity,
+                            edibility: match.species.edibility,
+                            season: match.species.season,
+                            habitat: match.species.habitat,
+                            keyFeatures: match.species.identificationTips.components(separatedBy: ". "),
+                            funFact: "A fascinating mushroom find!",
+                            imageName: match.species.referenceImageName,
+                            isDiscovered: true
+                        ),
+                        isNewSpecies: true,
+                        stats: DiscoveryStats(
+                            totalSpeciesFound: 5,
+                            totalSightings: 12,
+                            xpEarned: DiscoveryStats.xpForRarity(match.species.rarity) + DiscoveryStats.newSpeciesBonus
+                        ),
+                        onViewCollection: {
+                            showResultsFlow = false
+                            resultsFlowStep = .results
+                            isPresented = false
+                        },
+                        onKeepExploring: {
+                            showResultsFlow = false
+                            resultsFlowStep = .results
+                            isPresented = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+
     // MARK: - Top Controls Bar
 
     private var topControlsBar: some View {
@@ -314,8 +395,71 @@ struct ScannerView: View {
                 // Photo captured - show analyze/retake buttons
                 capturedPhotoControls
             } else if viewModel.authorizationStatus.canAccessCamera {
-                // Camera active - show capture button
-                captureButton
+                // Camera active - show capture button with gallery option
+                ZStack {
+                    // Capture button (center)
+                    captureButton
+
+                    // Gallery button (left side)
+                    HStack {
+                        galleryButton
+                        Spacer()
+                    }
+                    .padding(.horizontal, 40)
+                }
+            }
+        }
+    }
+
+    // MARK: - Gallery Button
+
+    private var galleryButton: some View {
+        PhotosPicker(
+            selection: $selectedPhotoItem,
+            matching: .images,
+            photoLibrary: .shared()
+        ) {
+            ZStack {
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 52, height: 52)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.3), lineWidth: 0.5)
+                    )
+                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+
+                Image(systemName: "photo.on.rectangle")
+                    .font(.system(size: 20, weight: .medium))
+                    .foregroundColor(.white)
+            }
+        }
+        .buttonStyle(BounceButtonStyle())
+        .onChange(of: selectedPhotoItem) { oldValue, newValue in
+            Task {
+                await loadSelectedPhoto()
+            }
+        }
+    }
+
+    // MARK: - Load Selected Photo
+
+    private func loadSelectedPhoto() async {
+        guard let selectedPhotoItem else { return }
+
+        do {
+            if let data = try await selectedPhotoItem.loadTransferable(type: Data.self),
+               let image = UIImage(data: data) {
+                await MainActor.run {
+                    viewModel.capturedImage = image
+                    viewModel.state = .captured
+                    self.selectedPhotoItem = nil
+                }
+            }
+        } catch {
+            print("Failed to load photo from gallery: \(error)")
+            await MainActor.run {
+                self.selectedPhotoItem = nil
             }
         }
     }
@@ -334,10 +478,6 @@ struct ScannerView: View {
                 Circle()
                     .fill(Color.white)
                     .frame(width: 64, height: 64)
-
-                // Mushroom icon
-                Text("🍄")
-                    .font(.system(size: 28))
             }
         }
         .buttonStyle(CaptureButtonStyle())
@@ -476,10 +616,23 @@ struct ScannerView: View {
         print("🔍 [ScannerView] analyzePhoto() called")
         print("🔍 [ScannerView] capturedImage exists: \(viewModel.capturedImage != nil)")
 
-        // Use mock identification result with 3 matches
-        // Setting this will trigger the fullScreenCover(item:) to present
-        identificationResult = IdentificationResult.mock
-        print("🔍 [ScannerView] identificationResult set, presenting results")
+        // Show scanning animation
+        isAnalyzing = true
+
+        // Trigger haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+
+        // Simulate analysis time (1 second for mock), then show results
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            isAnalyzing = false
+
+            // Use mock identification result with 3 matches
+            identificationResult = IdentificationResult.mock
+            resultsFlowStep = .results
+            showResultsFlow = true
+            print("🔍 [ScannerView] identificationResult set, presenting results")
+        }
     }
 }
 
