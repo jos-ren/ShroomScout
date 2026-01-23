@@ -27,10 +27,15 @@ struct HomeView: View {
                 )
 
                 // Mascot card with speech bubble
-                MascotCard(
-                    message: viewModel.mascotMessage,
-                    expression: .happy
-                )
+                AppCard(backgroundColor: AppColors.cream) {
+                    HStack(spacing: 0) {
+                        MascotView(expression: .happy, size: 80)
+
+                        Spacer()
+
+                        SpeechBubble(message: viewModel.mascotMessage)
+                    }
+                }
 
                 // Collection stats card
                 StatsCard(
@@ -105,6 +110,47 @@ private struct RegionBadge: View {
         .padding(.vertical, 10)
         .background(AppColors.primaryGreen.opacity(0.1))
         .cornerRadius(100)
+    }
+}
+
+// MARK: - Speech Bubble
+
+private struct SpeechBubble: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // Triangle pointer
+            Triangle()
+                .fill(.white)
+                .frame(width: 12, height: 16)
+                .rotationEffect(.degrees(-90))
+                .offset(x: 6)
+
+            // Bubble content
+            Text(message)
+                .font(.nunito(16, weight: .semibold))
+                .foregroundColor(AppColors.textDark)
+                .multilineTextAlignment(.leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(.white)
+                .cornerRadius(16)
+        }
+        .frame(maxWidth: 190)
+    }
+}
+
+// MARK: - Triangle Shape
+
+private struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 }
 

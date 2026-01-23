@@ -2,28 +2,42 @@
 //  AppCard.swift
 //  ShroomScout
 //
-//  Reusable card wrapper with white background, rounded corners, and shadow.
+//  Reusable card wrapper with white background, rounded corners, and 3D raised effect.
 //
 
 import SwiftUI
 
 struct AppCard<Content: View>: View {
     let content: Content
+    let backgroundColor: Color
+    let horizontalPadding: CGFloat
+    let verticalPadding: CGFloat
 
-    init(@ViewBuilder content: () -> Content) {
+    private let cornerRadius: CGFloat = 16
+    private let borderWidth: CGFloat = 2
+    private let borderColor = Color(hex: "E5E5E5") // Light gray border
+
+    init(
+        backgroundColor: Color = .white,
+        horizontalPadding: CGFloat = 24,
+        verticalPadding: CGFloat = 24,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.backgroundColor = backgroundColor
+        self.horizontalPadding = horizontalPadding
+        self.verticalPadding = verticalPadding
         self.content = content()
     }
 
     var body: some View {
         content
-            .padding(24)
-            .background(.white)
-            .cornerRadius(24)
-            .shadow(
-                color: .black.opacity(0.1),
-                radius: 7.5,
-                x: 0,
-                y: 5
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
+            .background(backgroundColor)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(borderColor, lineWidth: borderWidth)
             )
     }
 }

@@ -13,14 +13,73 @@ struct AppBadge: View {
         case edibility(Edibility)
     }
 
+    enum Size {
+        case regular
+        case small
+    }
+
     let type: BadgeType
+    var size: Size = .regular
 
     var body: some View {
         switch type {
         case .rarity(let rarity):
-            RarityBadgeContent(rarity: rarity)
+            RarityBadgeContent(rarity: rarity, size: size)
         case .edibility(let edibility):
-            EdibilityBadgeContent(edibility: edibility)
+            EdibilityBadgeContent(edibility: edibility, size: size)
+        }
+    }
+}
+
+// MARK: - Badge Constants
+
+private enum BadgeConstants {
+    static func height(for size: AppBadge.Size) -> CGFloat {
+        switch size {
+        case .regular: return 36
+        case .small: return 26
+        }
+    }
+
+    static func cornerRadius(for size: AppBadge.Size) -> CGFloat {
+        switch size {
+        case .regular: return 12
+        case .small: return 8
+        }
+    }
+
+    static func shadowOffset(for size: AppBadge.Size) -> CGFloat {
+        switch size {
+        case .regular: return 4
+        case .small: return 3
+        }
+    }
+
+    static func fontSize(for size: AppBadge.Size) -> CGFloat {
+        switch size {
+        case .regular: return 14
+        case .small: return 11
+        }
+    }
+
+    static func horizontalPadding(for size: AppBadge.Size) -> CGFloat {
+        switch size {
+        case .regular: return 16
+        case .small: return 10
+        }
+    }
+
+    static func dotSize(for size: AppBadge.Size) -> CGFloat {
+        switch size {
+        case .regular: return 8
+        case .small: return 6
+        }
+    }
+
+    static func spacing(for size: AppBadge.Size) -> CGFloat {
+        switch size {
+        case .regular: return 8
+        case .small: return 4
         }
     }
 }
@@ -29,6 +88,7 @@ struct AppBadge: View {
 
 private struct RarityBadgeContent: View {
     let rarity: Rarity
+    let size: AppBadge.Size
 
     private var backgroundColor: Color {
         switch rarity {
@@ -43,21 +103,54 @@ private struct RarityBadgeContent: View {
         }
     }
 
-    var body: some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(.white)
-                .frame(width: 8, height: 8)
-
-            Text(rarity.displayName)
-                .font(.nunito(14, weight: .semibold))
-                .foregroundColor(.white)
+    private var shadowColor: Color {
+        switch rarity {
+        case .common:
+            return Color(hex: "7A8189") // Darker gray
+        case .uncommon:
+            return Color(hex: "4CB896") // Darker green
+        case .rare:
+            return Color(hex: "5BB8E0") // Darker blue
+        case .legendary:
+            return Color(hex: "D4A82D") // Darker gold
         }
-        .padding(.leading, 16)
-        .padding(.trailing, 16)
-        .frame(height: 36)
-        .background(backgroundColor)
-        .cornerRadius(100)
+    }
+
+    private var height: CGFloat { BadgeConstants.height(for: size) }
+    private var cornerRadius: CGFloat { BadgeConstants.cornerRadius(for: size) }
+    private var shadowOffset: CGFloat { BadgeConstants.shadowOffset(for: size) }
+    private var fontSize: CGFloat { BadgeConstants.fontSize(for: size) }
+    private var horizontalPadding: CGFloat { BadgeConstants.horizontalPadding(for: size) }
+    private var dotSize: CGFloat { BadgeConstants.dotSize(for: size) }
+    private var spacing: CGFloat { BadgeConstants.spacing(for: size) }
+
+    var body: some View {
+        ZStack {
+            // Shadow layer
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(shadowColor)
+                .frame(height: height)
+                .offset(y: shadowOffset)
+
+            // Main badge layer
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(backgroundColor)
+                .frame(height: height)
+
+            // Content
+            HStack(spacing: spacing) {
+                Circle()
+                    .fill(.white)
+                    .frame(width: dotSize, height: dotSize)
+
+                Text(rarity.displayName)
+                    .font(.nunito(fontSize, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, horizontalPadding)
+        }
+        .frame(height: height + shadowOffset)
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 
@@ -65,6 +158,7 @@ private struct RarityBadgeContent: View {
 
 private struct EdibilityBadgeContent: View {
     let edibility: Edibility
+    let size: AppBadge.Size
 
     private var backgroundColor: Color {
         switch edibility {
@@ -73,11 +167,24 @@ private struct EdibilityBadgeContent: View {
         case .inedible:
             return AppColors.cream
         case .caution:
-            return AppColors.caution.opacity(0.2)
+            return Color(hex: "FEEBC8") // Light orange/amber
         case .toxic:
-            return Color(hex: "FF3B30").opacity(0.2)
+            return Color(hex: "9B59B6") // Purple
         case .deadly:
-            return Color(hex: "FF3B30").opacity(0.3)
+            return Color(hex: "2D2D2D") // Near black
+        }
+    }
+
+    private var shadowColor: Color {
+        switch edibility {
+        case .edible, .inedible:
+            return Color(hex: "E0D8C7") // Darker cream
+        case .caution:
+            return Color(hex: "E8C896") // Darker light orange
+        case .toxic:
+            return Color(hex: "7D3C98") // Darker purple
+        case .deadly:
+            return Color(hex: "1A1A1A") // Darker black
         }
     }
 
@@ -88,7 +195,7 @@ private struct EdibilityBadgeContent: View {
         case .caution:
             return AppColors.caution
         case .toxic, .deadly:
-            return AppColors.danger
+            return .white
         }
     }
 
@@ -107,19 +214,39 @@ private struct EdibilityBadgeContent: View {
         }
     }
 
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(icon)
-                .font(.nunito(14, weight: .semibold))
+    private var height: CGFloat { BadgeConstants.height(for: size) }
+    private var cornerRadius: CGFloat { BadgeConstants.cornerRadius(for: size) }
+    private var shadowOffset: CGFloat { BadgeConstants.shadowOffset(for: size) }
+    private var fontSize: CGFloat { BadgeConstants.fontSize(for: size) }
+    private var horizontalPadding: CGFloat { BadgeConstants.horizontalPadding(for: size) }
+    private var spacing: CGFloat { BadgeConstants.spacing(for: size) }
 
-            Text(edibility.displayName)
-                .font(.nunito(14, weight: .semibold))
-                .foregroundColor(textColor)
+    var body: some View {
+        ZStack {
+            // Shadow layer
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(shadowColor)
+                .frame(height: height)
+                .offset(y: shadowOffset)
+
+            // Main badge layer
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(backgroundColor)
+                .frame(height: height)
+
+            // Content
+            HStack(spacing: spacing) {
+                Text(icon)
+                    .font(.nunito(fontSize, weight: .semibold))
+
+                Text(edibility.displayName)
+                    .font(.nunito(fontSize, weight: .semibold))
+                    .foregroundColor(textColor)
+            }
+            .padding(.horizontal, horizontalPadding)
         }
-        .padding(.horizontal, 16)
-        .frame(height: 36)
-        .background(backgroundColor)
-        .cornerRadius(100)
+        .frame(height: height + shadowOffset)
+        .fixedSize(horizontal: true, vertical: false)
     }
 }
 
@@ -127,21 +254,21 @@ private struct EdibilityBadgeContent: View {
 
 extension AppBadge {
     /// Create a rarity badge
-    static func rarity(_ rarity: Rarity) -> AppBadge {
-        AppBadge(type: .rarity(rarity))
+    static func rarity(_ rarity: Rarity, size: Size = .regular) -> AppBadge {
+        AppBadge(type: .rarity(rarity), size: size)
     }
 
     /// Create an edibility badge
-    static func edibility(_ edibility: Edibility) -> AppBadge {
-        AppBadge(type: .edibility(edibility))
+    static func edibility(_ edibility: Edibility, size: Size = .regular) -> AppBadge {
+        AppBadge(type: .edibility(edibility), size: size)
     }
 }
 
 #Preview {
     VStack(spacing: 24) {
-        // Rarity badges
+        // Regular size rarity badges
         VStack(alignment: .leading, spacing: 12) {
-            Text("Rarity Badges")
+            Text("Rarity Badges (Regular)")
                 .font(.appHeadline)
                 .foregroundColor(AppColors.textDark)
 
@@ -152,6 +279,22 @@ extension AppBadge {
             HStack(spacing: 12) {
                 AppBadge.rarity(.rare)
                 AppBadge.rarity(.legendary)
+            }
+        }
+
+        Divider()
+
+        // Small size rarity badges
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Rarity Badges (Small)")
+                .font(.appHeadline)
+                .foregroundColor(AppColors.textDark)
+
+            HStack(spacing: 8) {
+                AppBadge.rarity(.common, size: .small)
+                AppBadge.rarity(.uncommon, size: .small)
+                AppBadge.rarity(.rare, size: .small)
+                AppBadge.rarity(.legendary, size: .small)
             }
         }
 

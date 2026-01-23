@@ -3,6 +3,7 @@
 //  ShroomScout
 //
 //  Reusable button component with primary and secondary variants.
+//  Features a 3D raised effect with darker bottom edge.
 //
 
 import SwiftUI
@@ -15,11 +16,13 @@ struct AppButton: View {
 
     let title: String
     let style: Style
+    let icon: String?
     let action: () -> Void
 
-    init(_ title: String, style: Style = .primary, action: @escaping () -> Void) {
+    init(_ title: String, style: Style = .primary, icon: String? = nil, action: @escaping () -> Void) {
         self.title = title
         self.style = style
+        self.icon = icon
         self.action = action
     }
 
@@ -32,6 +35,15 @@ struct AppButton: View {
         }
     }
 
+    private var shadowColor: Color {
+        switch style {
+        case .primary:
+            return Color(hex: "D9664E") // Darker coral
+        case .secondary:
+            return Color(hex: "3A6247") // Darker green
+        }
+    }
+
     private var fontSize: CGFloat {
         return 16
     }
@@ -40,23 +52,57 @@ struct AppButton: View {
         return 56
     }
 
+    private var shadowOffset: CGFloat {
+        return 6
+    }
+
+    private var cornerRadius: CGFloat {
+        return 16
+    }
+
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.nunito(fontSize, weight: .bold))
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: buttonHeight)
-                .background(backgroundColor)
-                .cornerRadius(buttonHeight / 2)
-                .shadow(
-                    color: .black.opacity(0.1),
-                    radius: 7.5,
-                    x: 0,
-                    y: 5
-                )
+            ZStack {
+                // Bottom shadow layer (darker color offset down)
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(shadowColor)
+                    .frame(height: buttonHeight)
+                    .offset(y: shadowOffset)
+
+                // Main button layer
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(backgroundColor)
+                    .frame(height: buttonHeight)
+
+                // Button content (icon + text)
+                HStack(spacing: 8) {
+                    if let icon = icon {
+                        Image(systemName: icon)
+                            .font(.system(size: fontSize, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Text(title)
+                        .font(.nunito(fontSize, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: buttonHeight + shadowOffset)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(BounceButtonStyle())
+        .buttonStyle(BounceButtonStyle3D(shadowOffset: shadowOffset))
+    }
+}
+
+/// Bouncy button style with 3D press effect
+struct BounceButtonStyle3D: ButtonStyle {
+    let shadowOffset: CGFloat
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .offset(y: configuration.isPressed ? shadowOffset * 0.6 : 0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
@@ -77,6 +123,10 @@ struct BounceButtonStyle: ButtonStyle {
 
         AppButton("View Collection", style: .secondary) {
             print("Secondary tapped!")
+        }
+        
+        AppButton("View Species Details", style: .primary, icon: "leaf.fill") {
+            print("With icon tapped!")
         }
     }
     .padding(.horizontal, 24)

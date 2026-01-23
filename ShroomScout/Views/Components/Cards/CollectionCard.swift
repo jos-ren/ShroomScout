@@ -22,23 +22,17 @@ struct CollectionCard: View {
 
     var body: some View {
         Button(action: { onTap?() }) {
-            VStack(spacing: 0) {
-                // Image/Placeholder area
-                imageArea
-                    .frame(height: imageHeight)
+            AppCard(horizontalPadding: 0, verticalPadding: 0) {
+                VStack(spacing: 0) {
+                    // Image/Placeholder area
+                    imageArea
+                        .frame(height: imageHeight)
 
-                // Info area - just the name
-                infoArea
+                    // Info area - just the name
+                    infoArea
+                }
+                .frame(height: cardHeight)
             }
-            .frame(height: cardHeight)
-            .background(.white)
-            .cornerRadius(20)
-            .shadow(
-                color: .black.opacity(0.1),
-                radius: 3,
-                x: 0,
-                y: 2
-            )
         }
         .buttonStyle(CollectionCardButtonStyle())
     }

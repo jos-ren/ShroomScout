@@ -30,19 +30,6 @@ struct MapView: View {
             // Full-screen Map
             mapContent
 
-            // Floating UI overlay
-            VStack(spacing: 0) {
-                // Search bar at top
-                searchFilterBar
-                    .padding(.horizontal, 24)
-                    .padding(.top, 16)
-
-                Spacer()
-
-                // Bottom sheet
-                bottomSheet
-            }
-
             // My Location button
             VStack {
                 Spacer()
@@ -58,7 +45,7 @@ struct MapView: View {
                 }
             }
 
-            // Callout for selected sighting (above everything)
+            // Callout for selected sighting (above location button, beneath bottom sheet)
             if showCallout, let sighting = viewModel.selectedSighting {
                 VStack {
                     Spacer()
@@ -69,7 +56,7 @@ struct MapView: View {
                             selectedSightingForDetail = sighting
                         },
                         onDismiss: {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            withAnimation(.easeOut(duration: 0.25)) {
                                 viewModel.selectedSighting = nil
                                 showCallout = false
                             }
@@ -79,6 +66,14 @@ struct MapView: View {
                     .padding(.bottom, viewModel.bottomSheetState.detentHeight + 16)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+
+            // Floating UI overlay
+            VStack(spacing: 0) {
+                Spacer()
+
+                // Bottom sheet
+                bottomSheet
             }
 
             // Location permission denied overlay
@@ -108,7 +103,7 @@ struct MapView: View {
             }
         }
         .onChange(of: viewModel.selectedSighting) { oldValue, newValue in
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            withAnimation(.easeOut(duration: 0.25)) {
                 showCallout = newValue != nil
             }
         }
@@ -163,41 +158,6 @@ struct MapView: View {
             }
         )
         .ignoresSafeArea()
-    }
-
-    // MARK: - Search/Filter Bar
-
-    private var searchFilterBar: some View {
-        HStack(spacing: 12) {
-            // Search icon
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(AppColors.primaryGreen)
-                .frame(width: 32, height: 32)
-                .background(AppColors.cream)
-                .clipShape(Circle())
-
-            // Search field
-            TextField("Search species...", text: $viewModel.searchText)
-                .font(.nunito(16, weight: .regular))
-                .foregroundColor(AppColors.textDark)
-
-            // Clear button
-            if !viewModel.searchText.isEmpty {
-                Button(action: {
-                    viewModel.searchText = ""
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(AppColors.textLight)
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .frame(height: 56)
-        .background(.white)
-        .cornerRadius(100)
-        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
     }
 
     // MARK: - Bottom Sheet

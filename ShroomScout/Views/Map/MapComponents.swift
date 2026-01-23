@@ -17,78 +17,63 @@ struct SightingCalloutView: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 16) {
-                // Photo thumbnail
-                photoThumbnail
+        AppCard(horizontalPadding: 16, verticalPadding: 16) {
+            VStack(spacing: 0) {
+                HStack(spacing: 16) {
+                    // Photo thumbnail
+                    photoThumbnail
 
-                // Info
-                VStack(alignment: .leading, spacing: 6) {
-                    // Species name with close button
-                    HStack {
-                        Text(sighting.speciesName)
-                            .font(.nunito(18, weight: .bold))
-                            .foregroundColor(AppColors.textDark)
-                            .lineLimit(1)
-
-                        Spacer()
-
-                        // Close button
-                        Button(action: onDismiss) {
-                            Image(systemName: "xmark")
-                                .font(.system(size: 10, weight: .semibold))
+                    // Info
+                    VStack(alignment: .leading, spacing: 6) {
+                        // Species name with close button
+                        HStack {
+                            Text(sighting.speciesName)
+                                .font(.nunito(18, weight: .bold))
                                 .foregroundColor(AppColors.textDark)
-                                .frame(width: 24, height: 24)
-                                .background(.thinMaterial)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.black.opacity(0.08), lineWidth: 0.5)
-                                )
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            // Close button
+                            Button(action: onDismiss) {
+                                Image(systemName: "xmark")
+                                    .font(.system(size: 10, weight: .semibold))
+                                    .foregroundColor(AppColors.textDark)
+                                    .frame(width: 24, height: 24)
+                                    .background(.thinMaterial)
+                                    .clipShape(Circle())
+                                    .overlay(
+                                        Circle()
+                                            .stroke(Color.black.opacity(0.08), lineWidth: 0.5)
+                                    )
+                            }
                         }
-                    }
 
-                    // Rarity badge
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(AppColors.color(for: sighting.rarity))
-                            .frame(width: 8, height: 8)
+                        // Rarity badge
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(AppColors.color(for: sighting.rarity))
+                                .frame(width: 8, height: 8)
 
-                        Text(sighting.rarity.displayName)
-                            .font(.nunito(12, weight: .semibold))
+                            Text(sighting.rarity.displayName)
+                                .font(.nunito(12, weight: .semibold))
+                                .foregroundColor(AppColors.textLight)
+                        }
+
+                        // Date
+                        Text(sighting.dateSighted.formatted(date: .abbreviated, time: .omitted))
+                            .font(.nunito(12, weight: .medium))
                             .foregroundColor(AppColors.textLight)
                     }
-
-                    // Date
-                    Text(sighting.dateSighted.formatted(date: .abbreviated, time: .omitted))
-                        .font(.nunito(12, weight: .medium))
-                        .foregroundColor(AppColors.textLight)
                 }
-            }
 
-            // View button
-            Button(action: onViewDetails) {
-                HStack(spacing: 8) {
-                    Text("View Details")
-                        .font(.nunito(14, weight: .semibold))
-                        .foregroundColor(.white)
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white)
+                // View button
+                AppButton("View Details", style: .secondary) {
+                    onViewDetails()
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 44)
-                .background(AppColors.primaryGreen)
-                .cornerRadius(12)
+                .padding(.top, 16)
             }
-            .buttonStyle(BounceButtonStyle())
-            .padding(.top, 16)
         }
-        .padding(16)
-        .background(.white)
-        .cornerRadius(20)
-        .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 10)
     }
 
     private var photoThumbnail: some View {

@@ -11,72 +11,70 @@ struct ComponentShowcaseView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Buttons") {
+                // Core reusable building blocks
+                Section("Core") {
                     NavigationLink("AppButton") {
                         ButtonShowcase()
                     }
-                }
-
-                Section("Cards") {
                     NavigationLink("AppCard") {
                         CardShowcase()
                     }
-                    NavigationLink("CollectionCard") {
-                        CollectionCardShowcase()
-                    }
-                }
-
-                Section("Navigation") {
-                    NavigationLink("CustomTabBar") {
-                        TabBarShowcase()
-                    }
-                }
-
-                Section("Badges") {
                     NavigationLink("AppBadge") {
                         BadgeShowcase()
                     }
                 }
 
-                Section("Mascot") {
-                    NavigationLink("MascotView") {
-                        MascotShowcase()
-                    }
-                }
-
-                Section("Feedback") {
-                    NavigationLink("LoadingOverlay") {
-                        ComingSoonView(name: "LoadingOverlay")
-                    }
-                    NavigationLink("WarningBanner") {
-                        WarningBannerShowcase()
-                    }
-                    NavigationLink("EmptyStateView") {
-                        ComingSoonView(name: "EmptyStateView")
-                    }
-                }
-
-                Section("Collection") {
-                    NavigationLink("CollectionProgress") {
-                        CollectionProgressShowcase()
-                    }
-                    NavigationLink("CollectionTabs") {
-                        CollectionTabsShowcase()
+                // Interactive selection components
+                Section("Controls") {
+                    NavigationLink("SegmentedControl") {
+                        SegmentedControlShowcase()
                     }
                     NavigationLink("RarityFilters") {
                         RarityFiltersShowcase()
                     }
                 }
 
-                Section("Common") {
-                    NavigationLink("PageHeader") {
-                        PageHeaderShowcase()
+                // Progress and status indicators
+                Section("Progress") {
+                    NavigationLink("ProgressBar") {
+                        ProgressBarShowcase()
                     }
                     NavigationLink("ProgressIndicator") {
                         ProgressIndicatorShowcase()
                     }
-                    NavigationLink("ProgressBar") {
-                        ComingSoonView(name: "ProgressBar")
+                    NavigationLink("CollectionProgress") {
+                        CollectionProgressShowcase()
+                    }
+                }
+
+                // Navigation components
+                Section("Navigation") {
+                    NavigationLink("CustomTabBar") {
+                        TabBarShowcase()
+                    }
+                    NavigationLink("PageHeader") {
+                        PageHeaderShowcase()
+                    }
+                }
+
+                // User feedback components
+                Section("Feedback") {
+                    NavigationLink("WarningBanner") {
+                        WarningBannerShowcase()
+                    }
+                }
+
+                // Collection-specific cards
+                Section("Cards") {
+                    NavigationLink("CollectionCard") {
+                        CollectionCardShowcase()
+                    }
+                }
+
+                // Brand elements
+                Section("Branding") {
+                    NavigationLink("MascotView") {
+                        MascotShowcase()
                     }
                 }
             }
@@ -550,6 +548,98 @@ struct WarningBannerShowcase: View {
     }
 }
 
+// MARK: - Progress Bar Showcase
+
+struct ProgressBarShowcase: View {
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 32) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Default")
+                        .font(.appHeadline)
+                        .foregroundColor(AppColors.textDark)
+
+                    ProgressBar(progress: 0.6)
+
+                    Text("Green fill, 12px height, 6px corner radius")
+                        .font(.appCaption)
+                        .foregroundColor(AppColors.textLight)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Various Progress")
+                        .font(.appHeadline)
+                        .foregroundColor(AppColors.textDark)
+
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("0%")
+                                .font(.appCaption)
+                                .frame(width: 40)
+                            ProgressBar(progress: 0.0)
+                        }
+                        HStack {
+                            Text("25%")
+                                .font(.appCaption)
+                                .frame(width: 40)
+                            ProgressBar(progress: 0.25)
+                        }
+                        HStack {
+                            Text("50%")
+                                .font(.appCaption)
+                                .frame(width: 40)
+                            ProgressBar(progress: 0.5)
+                        }
+                        HStack {
+                            Text("75%")
+                                .font(.appCaption)
+                                .frame(width: 40)
+                            ProgressBar(progress: 0.75)
+                        }
+                        HStack {
+                            Text("100%")
+                                .font(.appCaption)
+                                .frame(width: 40)
+                            ProgressBar(progress: 1.0)
+                        }
+                    }
+                    .foregroundColor(AppColors.textLight)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Custom Colors")
+                        .font(.appHeadline)
+                        .foregroundColor(AppColors.textDark)
+
+                    ProgressBar(progress: 0.7, fillColor: AppColors.coral)
+                    ProgressBar(progress: 0.5, fillColor: AppColors.rarityLegendary)
+                    ProgressBar(progress: 0.3, fillColor: AppColors.rarityRare)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Custom Heights")
+                        .font(.appHeadline)
+                        .foregroundColor(AppColors.textDark)
+
+                    ProgressBar(progress: 0.6, height: 8)
+                    ProgressBar(progress: 0.6, height: 16)
+                    ProgressBar(progress: 0.6, height: 24)
+
+                    Text("8px, 16px, 24px heights")
+                        .font(.appCaption)
+                        .foregroundColor(AppColors.textLight)
+                }
+
+                Spacer()
+            }
+            .padding(24)
+        }
+        .background(AppColors.background)
+        .navigationTitle("Progress Bar")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 // MARK: - Progress Indicator Showcase
 
 struct ProgressIndicatorShowcase: View {
@@ -805,36 +895,78 @@ struct CollectionProgressShowcase: View {
     }
 }
 
-// MARK: - Collection Tabs Showcase
+// MARK: - Segmented Control Showcase
 
-struct CollectionTabsShowcase: View {
-    @State private var selectedMode: CollectionViewMode = .allSpecies
+private enum ShowcaseOption: String, CaseIterable {
+    case optionA = "Option A"
+    case optionB = "Option B"
+}
+
+private enum ThreeOptions: String, CaseIterable {
+    case first = "First"
+    case second = "Second"
+    case third = "Third"
+}
+
+struct SegmentedControlShowcase: View {
+    @State private var twoSelected: ShowcaseOption = .optionA
+    @State private var threeSelected: ThreeOptions = .first
+    @State private var collectionMode: CollectionViewMode = .allSpecies
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: 32) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Segmented Toggle")
+                    Text("Two Options")
                         .font(.appHeadline)
                         .foregroundColor(AppColors.textDark)
 
-                    CollectionTabs(selectedMode: $selectedMode)
+                    SegmentedControl(selected: $twoSelected)
 
-                    Text("Selected: \(selectedMode.rawValue)")
+                    Text("Selected: \(twoSelected.rawValue)")
                         .font(.appCaption)
                         .foregroundColor(AppColors.textLight)
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Specs")
+                    Text("Three Options")
+                        .font(.appHeadline)
+                        .foregroundColor(AppColors.textDark)
+
+                    SegmentedControl(selected: $threeSelected)
+
+                    Text("Selected: \(threeSelected.rawValue)")
+                        .font(.appCaption)
+                        .foregroundColor(AppColors.textLight)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("CollectionTabs Wrapper")
+                        .font(.appHeadline)
+                        .foregroundColor(AppColors.textDark)
+
+                    CollectionTabs(selectedMode: $collectionMode)
+
+                    Text("Selected: \(collectionMode.rawValue)")
+                        .font(.appCaption)
+                        .foregroundColor(AppColors.textLight)
+
+                    Text("CollectionTabs is a convenience wrapper using SegmentedControl")
+                        .font(.appCaption)
+                        .foregroundColor(AppColors.textLight)
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Features")
                         .font(.appHeadline)
                         .foregroundColor(AppColors.textDark)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("• Cream background")
-                        Text("• Green fill on selected")
-                        Text("• Nunito Semibold 14px")
-                        Text("• Spring animation on tap")
+                        Text("• 3D raised button style")
+                        Text("• Works with any CaseIterable enum")
+                        Text("• Green selected, white unselected")
+                        Text("• Press animation pushes down")
+                        Text("• Full width, equal sized segments")
                     }
                     .font(.appCaption)
                     .foregroundColor(AppColors.textLight)
@@ -845,7 +977,7 @@ struct CollectionTabsShowcase: View {
             .padding(24)
         }
         .background(AppColors.background)
-        .navigationTitle("Collection Tabs")
+        .navigationTitle("Segmented Control")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -892,31 +1024,6 @@ struct RarityFiltersShowcase: View {
         }
         .background(AppColors.background)
         .navigationTitle("Rarity Filters")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-// MARK: - Coming Soon Placeholder
-
-struct ComingSoonView: View {
-    let name: String
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Text("🚧")
-                .font(.system(size: 64))
-
-            Text("\(name)")
-                .font(.appHeadline)
-                .foregroundColor(AppColors.textDark)
-
-            Text("Component not yet created")
-                .font(.appBody)
-                .foregroundColor(AppColors.textLight)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
-        .navigationTitle(name)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

@@ -18,39 +18,25 @@ struct CollectionProgress: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Region and count row
-            HStack {
-                Text(region)
-                    .font(.nunito(14, weight: .semibold))
-                    .foregroundColor(AppColors.textLight)
+        AppCard(backgroundColor: AppColors.cream, horizontalPadding: 16, verticalPadding: 16) {
+            VStack(alignment: .leading, spacing: 12) {
+                // Region and count row
+                HStack {
+                    Text(region)
+                        .font(.nunito(14, weight: .semibold))
+                        .foregroundColor(AppColors.textLight)
 
-                Spacer()
+                    Spacer()
 
-                Text("\(discoveredCount)/\(totalCount) discovered")
-                    .font(.nunito(14, weight: .bold))
-                    .foregroundColor(AppColors.primaryGreen)
-            }
-
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Background track
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(AppColors.primaryGreen.opacity(0.15))
-                        .frame(height: 12)
-
-                    // Progress fill
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(AppColors.primaryGreen)
-                        .frame(width: geometry.size.width * progress, height: 12)
+                    Text("\(discoveredCount)/\(totalCount) discovered")
+                        .font(.nunito(14, weight: .bold))
+                        .foregroundColor(AppColors.primaryGreen)
                 }
+
+                // Progress bar
+                ProgressBar(progress: progress)
             }
-            .frame(height: 12)
         }
-        .padding(16)
-        .background(AppColors.cream)
-        .cornerRadius(16)
     }
 }
 

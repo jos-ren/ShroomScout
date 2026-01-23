@@ -2,7 +2,7 @@
 //  RarityFilters.swift
 //  ShroomScout
 //
-//  Horizontal scrollable filter pills for filtering by rarity.
+//  Horizontal scrollable filter pills for filtering by rarity using AppBadge.
 //
 
 import SwiftUI
@@ -16,13 +16,9 @@ struct RarityFilters: View {
     }
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 6) {
             if showAllOption {
-                filterPill(
-                    title: "All",
-                    color: AppColors.primaryGreen,
-                    isSelected: allSelected
-                ) {
+                AllFilterBadge(isSelected: allSelected) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         selectedRarities.removeAll()
                     }
@@ -30,13 +26,12 @@ struct RarityFilters: View {
             }
 
             ForEach(Rarity.allCases, id: \.self) { rarity in
-                filterPill(
-                    title: rarity.rawValue.capitalized,
-                    color: rarityColor(for: rarity),
+                RarityFilterBadge(
+                    rarity: rarity,
                     isSelected: selectedRarities.contains(rarity)
                 ) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        toggleRarity(rarity)
+                        selectRarity(rarity)
                     }
                 }
             }
@@ -44,64 +39,147 @@ struct RarityFilters: View {
         .fixedSize(horizontal: true, vertical: true)
     }
 
-    private func filterPill(
-        title: String,
-        color: Color,
-        isSelected: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(isSelected ? .white : color)
-                    .frame(width: 6, height: 6)
-
-                Text(title)
-                    .font(.nunito(11, weight: .semibold))
-                    .lineLimit(1)
-            }
-            .foregroundColor(isSelected ? .white : AppColors.textDark)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(isSelected ? color : .white)
-            )
-            .overlay(
-                Capsule()
-                    .stroke(isSelected ? Color.clear : color.opacity(0.3), lineWidth: 1)
-            )
-        }
-        .buttonStyle(FilterPillButtonStyle())
-    }
-
-    private func toggleRarity(_ rarity: Rarity) {
+    private func selectRarity(_ rarity: Rarity) {
         if selectedRarities.contains(rarity) {
-            selectedRarities.remove(rarity)
+            // Tapping already selected rarity deselects it (shows all)
+            selectedRarities.removeAll()
         } else {
+            // Single selection - clear others and select this one
+            selectedRarities.removeAll()
             selectedRarities.insert(rarity)
-        }
-    }
-
-    private func rarityColor(for rarity: Rarity) -> Color {
-        switch rarity {
-        case .common:
-            return AppColors.rarityCommon
-        case .uncommon:
-            return AppColors.rarityUncommon
-        case .rare:
-            return AppColors.rarityRare
-        case .legendary:
-            return AppColors.rarityLegendary
         }
     }
 }
 
-private struct FilterPillButtonStyle: ButtonStyle {
+// MARK: - All Filter Badge
+
+private struct AllFilterBadge: View {
+    let isSelected: Bool
+    let action: () -> Void
+
+    private let height: CGFloat = 26
+    private let cornerRadius: CGFloat = 8
+    private let shadowOffset: CGFloat = 3
+
+    private var backgroundColor: Color {
+        isSelected ? AppColors.primaryGreen : .white
+    }
+
+    private var shadowColor: Color {
+        isSelected ? Color(hex: "3A6247") : Color(hex: "E5E5E5")
+    }
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                // Shadow layer
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(shadowColor)
+                    .frame(height: height)
+                    .offset(y: shadowOffset)
+
+                // Main layer
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(backgroundColor)
+                    .frame(height: height)
+
+                // Content
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(isSelected ? .white : AppColors.primaryGreen)
+                        .frame(width: 6, height: 6)
+
+                    Text("All")
+                        .font(.nunito(11, weight: .semibold))
+                        .foregroundColor(isSelected ? .white : AppColors.textDark)
+                }
+                .padding(.horizontal, 10)
+            }
+            .frame(height: height + shadowOffset)
+            .fixedSize(horizontal: true, vertical: false)
+        }
+        .buttonStyle(FilterBadgeButtonStyle(shadowOffset: shadowOffset))
+    }
+}
+
+// MARK: - Rarity Filter Badge
+
+private struct RarityFilterBadge: View {
+    let rarity: Rarity
+    let isSelected: Bool
+    let action: () -> Void
+
+    private let height: CGFloat = 26
+    private let cornerRadius: CGFloat = 8
+    private let shadowOffset: CGFloat = 3
+
+    private var rarityColor: Color {
+        AppColors.color(for: rarity)
+    }
+
+    private var backgroundColor: Color {
+        isSelected ? rarityColor : .white
+    }
+
+    private var shadowColor: Color {
+        if isSelected {
+            switch rarity {
+            case .common:
+                return Color(hex: "7A8189")
+            case .uncommon:
+                return Color(hex: "4CB896")
+            case .rare:
+                return Color(hex: "5BB8E0")
+            case .legendary:
+                return Color(hex: "D4A82D")
+            }
+        } else {
+            return Color(hex: "E5E5E5")
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                // Shadow layer
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(shadowColor)
+                    .frame(height: height)
+                    .offset(y: shadowOffset)
+
+                // Main layer
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(backgroundColor)
+                    .frame(height: height)
+
+                // Content
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(isSelected ? .white : rarityColor)
+                        .frame(width: 6, height: 6)
+
+                    Text(rarity.displayName)
+                        .font(.nunito(11, weight: .semibold))
+                        .foregroundColor(isSelected ? .white : AppColors.textDark)
+                }
+                .padding(.horizontal, 10)
+            }
+            .frame(height: height + shadowOffset)
+            .fixedSize(horizontal: true, vertical: false)
+        }
+        .buttonStyle(FilterBadgeButtonStyle(shadowOffset: shadowOffset))
+    }
+}
+
+// MARK: - Button Style
+
+private struct FilterBadgeButtonStyle: ButtonStyle {
+    let shadowOffset: CGFloat
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+            .offset(y: configuration.isPressed ? shadowOffset * 0.6 : 0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 

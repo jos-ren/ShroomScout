@@ -201,24 +201,9 @@ struct SightingDetailSheet: View {
 
                     // View Species button (for map sighting details)
                     if showViewSpeciesButton {
-                        Button(action: {
+                        AppButton("View Species Details", style: .primary, icon: "leaf.fill") {
                             onViewSpecies?(sighting.speciesID)
-                        }) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "leaf.fill")
-                                    .font(.system(size: 16, weight: .semibold))
-
-                                Text("View Species Details")
-                                    .font(.nunito(16, weight: .bold))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(AppColors.primaryGreen)
-                            .cornerRadius(28)
-                            .shadow(color: .black.opacity(0.1), radius: 7.5, x: 0, y: 5)
                         }
-                        .buttonStyle(BounceButtonStyle())
                         .padding(.horizontal, 24)
                     }
                 }
@@ -257,37 +242,34 @@ struct SightingDetailSheet: View {
     // MARK: - Detail Card
 
     private func detailCard(icon: String, title: String, value: String) -> some View {
-        HStack(spacing: 14) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(AppColors.primaryGreen.opacity(0.1))
-                    .frame(width: 44, height: 44)
+        AppCard(horizontalPadding: 16, verticalPadding: 14) {
+            HStack(spacing: 14) {
+                // Icon
+                ZStack {
+                    Circle()
+                        .fill(AppColors.primaryGreen.opacity(0.1))
+                        .frame(width: 44, height: 44)
 
-                Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .foregroundColor(AppColors.primaryGreen)
+                    Image(systemName: icon)
+                        .font(.system(size: 18))
+                        .foregroundColor(AppColors.primaryGreen)
+                }
+
+                // Text
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.nunito(12, weight: .regular))
+                        .foregroundColor(AppColors.textLight)
+
+                    Text(value)
+                        .font(.nunito(16, weight: .semibold))
+                        .foregroundColor(AppColors.textDark)
+                        .textSelection(.enabled)
+                }
+
+                Spacer()
             }
-
-            // Text
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title)
-                    .font(.nunito(12, weight: .regular))
-                    .foregroundColor(AppColors.textLight)
-
-                Text(value)
-                    .font(.nunito(16, weight: .semibold))
-                    .foregroundColor(AppColors.textDark)
-                    .textSelection(.enabled)
-            }
-
-            Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(.white)
-        .cornerRadius(24)
-        .shadow(color: .black.opacity(0.1), radius: 7.5, x: 0, y: 5)
     }
 
     // MARK: - Formatting
